@@ -1,0 +1,57 @@
+SELECT * FROM(
+SELECT fNFe."ItemCode"         AS Cod_Item,
+	   dItem."ItemName"        AS Nome_Item,
+	   fNFe."UomCode"          AS Unidade_Medida,
+	   SUM(fNFe."Quantity")    AS Quantidade,
+	   SUM(fNFe."LineTotal")   AS VALOR_TOTAL,
+	   dFilial."BPLName"       AS Filial,
+	   TO_DATE(dNFe."DocDate") AS Data_NF,
+	   dNFe."Serial"           AS NRO_NF,
+	   fNFe."BaseEntry"
+  FROM       PCH1 fNFe
+  INNER JOIN OPCH dNFe    ON fNFe."DocEntry" = dNFe."DocEntry"
+  LEFT  JOIN OBPL dFilial ON dNFe."BPLId" = dFilial."BPLId"
+  INNER JOIN OITM dItem   ON fNFe."ItemCode" = dItem."ItemCode"
+  INNER JOIN OITB dGrupo  ON dItem."ItmsGrpCod" = dGrupo."ItmsGrpCod"  
+    AND UPPER(dGrupo."ItmsGrpNam") = 'FERRAMENTAS'
+WHERE dNFe."CANCELED" = 'N'
+  AND TO_DATE(dNFe."DocDate") > TO_DATE('01/01/2023','dd/mm/yyyy')
+GROUP BY fNFe."ItemCode",
+	     dItem."ItemName",
+	     dNFe."DocDate",
+	     dNFe."Serial",
+	     dFilial."BPLName",
+	     fNFe."UomCode",
+	     fNFe."BaseEntry"
+UNION ALL
+SELECT fNFe."ItemCode"         AS Cod_Item,
+	   dItem."ItemName"        AS Nome_Item,
+	   fNFe."UomCode"          AS Unidade_Medida,
+	   SUM(fNFe."Quantity")    AS Quantidade,
+	   SUM(fNFe."LineTotal")   AS VALOR_TOTAL,
+	   dFilial."BPLName"       AS Filial,
+	   TO_DATE(dNFe."DocDate") AS Data_NF,
+	   dNFe."Serial"           AS NRO_NF,
+	   CASE 
+	     WHEN fNFe."BaseType" = 22 THEN fNFe."BaseEntry"
+	     ELSE '-1'
+	   END  
+	     
+  FROM       DPO1 fNFe
+  INNER JOIN ODPO dNFe    ON fNFe."DocEntry" = dNFe."DocEntry"
+  LEFT  JOIN OBPL dFilial ON dNFe."BPLId" = dFilial."BPLId"
+  INNER JOIN OITM dItem   ON fNFe."ItemCode" = dItem."ItemCode"
+  INNER JOIN OITB dGrupo  ON dItem."ItmsGrpCod" = dGrupo."ItmsGrpCod"  
+	AND UPPER(dGrupo."ItmsGrpNam") = 'FERRAMENTAS'
+WHERE dNFe."CANCELED" = 'N'
+  AND TO_DATE(dNFe."DocDate") > TO_DATE('01/01/2023','dd/mm/yyyy')
+  AND fNFe."DocEntry" NOT IN (SELECT "BaseEntry" FROM PCH1 WHERE "BaseType" = 204)
+GROUP BY fNFe."ItemCode",
+	     dItem."ItemName",
+	     dNFe."DocDate",
+	     dNFe."Serial",
+	     dFilial."BPLName",
+	     fNFe."BaseType",
+	     fNFe."BaseEntry",
+	     fNFe."UomCode") X
+ORDER BY Nome_Item
