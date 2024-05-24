@@ -1,0 +1,42 @@
+/*==================================================================================*/
+/*		      					Dimensão de Grupo de Itens							*/
+/*==================================================================================*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ CRIADO POR: 				30/04/2024		JOHNSON WESLEY HRENECHEN	
+ ( I ) ATUALIZADO POR:
+		LOG: 
+
+ OBJETIVO: Dimensionalizar os dados sobre os grupos de itens.
+ DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+ SCHEMA: SBOTRUSTAGRO
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*==================================COLABORADORES==================================*/	
+
+-- Iniciando a transação
+
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+
+	CREATE VIEW "SBOTRUSTAGRO"."vw_dGrupoItem"
+			(
+				"Grupo_Cod"
+				,"Grupo_Nome"
+			) AS		
+				SELECT
+					"ItmsGrpCod"							AS "Grupo_Cod"
+					, "ItmsGrpNam"							AS "Grupo_Nome"
+					FROM 
+						OITB
+				UNION ALL
+				SELECT
+					'-1'									AS "Grupo_Cod" 
+					, 'ND'									AS "Grupo_Nome"
+					FROM
+						DUMMY
+				ORDER BY
+					"Grupo_Cod" ASC ;
+									
+-- Concluir a transação
+	 COMMIT ;
+-- Caso algo dê errado, desfazer todas as operações da transação

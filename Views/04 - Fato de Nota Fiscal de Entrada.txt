@@ -1,0 +1,84 @@
+/*==================================================================================*/
+/*		      					Fato de NF Entrada									*/
+/*==================================================================================*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ CRIADO POR: 				03/04/2024		JOHNSON WESLEY HRENECHEN	
+ ( I ) ATUALIZADO POR: 		
+
+ OBJETIVO: 
+ DESCRIÇÃO: Identifica as Notas Fiscais não canceladas do sistema.
+ SCHEMA: SBOTRUSTAGRO
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*==================================NF_ENTRADA==================================*/	
+-- Iniciando a transação
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+
+CREATE VIEW "SBOTRUSTAGRO"."vw_fNFEntrada"
+	(
+	"Cod NF de Entrada" 	
+	, "Cod Entrada"			
+	, "Utilidade"
+	, "Status"
+	, "Lancamento" 
+	, "Data Necessaria" 
+	, "Quantidade de Itens"
+	, "Titular"
+	, "Filial"
+	, "Unidade"
+	, "Departamento"
+	, "Comentarios"
+	, "Codigo Interno"
+	, "Codigo de Adiantamento"
+	) AS
+			SELECT
+				dNF_Entrada."DocNum" 								AS "Cod NF de Entrada"
+				, dNF_Entrada."DocEntry" 							AS "Cod Entrada" 			
+				, fNF_EntradaExtendida."MainUsage"					AS "Utilidade"
+				, dNF_Entrada."DocStatus"							AS "Status"
+--				, dNF_Entrada."CardCode"							AS "Fornecedor" 				
+				, CAST 	( dNF_Entrada."DocDate" 	AS DATE ) 		AS "Lancamento" 	
+				, CAST 	( dNF_Entrada."DocDueDate" AS DATE )		AS "Data Necessaria"
+				, COUNT	( DISTINCT fNF_Entrada."ItemCode" )			AS "Quantidade de Itens"
+--				, SUM 	( fNF_Entrada."Quantity" )					AS "Volume Total"		
+				, dNF_Entrada."OwnerCode"							AS "Titular"					
+				, dNF_Entrada."BPLId"								AS "Filial"						
+				, fNF_Entrada."OcrCode"                        		AS "Unidade"	
+				, fNF_Entrada."OcrCode2"                       		AS "Departamento"            					
+				, dNF_Entrada."Comments"							AS "Comentarios"
+				, fNF_Entrada."BaseEntry"							AS "Codigo Interno" -- Conecta-se ao DocEntry do Pedido.
+				, fNF_Adiantamento."BaseAbs"						AS "Codigo de Adiantamento" -- Permitirá a conexão com Adiantento DocEntry 	
+						
+				FROM
+					OPCH											AS dNF_Entrada
+					INNER JOIN PCH1 								AS fNF_Entrada
+						ON 	dNF_Entrada."DocEntry" = fNF_Entrada."DocEntry"
+					INNER JOIN PCH12								AS fNF_EntradaExtendida
+						ON 	dNF_Entrada."DocEntry" = fNF_EntradaExtendida."DocEntry"	
+					LEFT JOIN PCH11									AS fNF_Adiantamento
+						ON 	dNF_Entrada."DocEntry" = fNF_Adiantamento."DocEntry"	
+				WHERE
+					dNF_Entrada."CANCELED" = 'N'
+				GROUP BY
+					dNF_Entrada."DocNum" 		
+					, dNF_Entrada."DocDate" 		
+					, dNF_Entrada."DocDueDate" 	
+--					, dNF_Entrada."CardCode" 		
+					, dNF_Entrada."OwnerCode" 	
+					, dNF_Entrada."DocStatus" 	
+					, dNF_Entrada."BPLId"		
+					, fNF_Entrada."OcrCode"		
+					, fNF_Entrada."OcrCode2"
+					, dNF_Entrada."Comments"
+					, fNF_EntradaExtendida."MainUsage"	
+					, fNF_Entrada."BaseEntry"
+					, dNF_Entrada."DocEntry" 
+					, fNF_Adiantamento."BaseAbs"
+					
+				ORDER BY
+					dNF_Entrada."DocNum" DESC ;
+-- Concluir a transação
+	 COMMIT;
+-- Caso algo dê errado, desfazer todas as operações da transação, não pode ser feito após o COMMIT.
+-- ROLLBACK;

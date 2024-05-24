@@ -1,3 +1,9 @@
+/*        CONSULTA GERAL DE COMPRA DE FERRAMENTAS
+Essa consulta busca todos as compras e adiantamentos de itens que se encaixam no grupo "Ferramentas"
+*/
+
+
+
 SELECT * FROM(
 SELECT fNFe."ItemCode"         AS Cod_Item,
 	   dItem."ItemName"        AS Nome_Item,

@@ -1,0 +1,30 @@
+SELECT dNFEntrada."DocNum"             AS "Código Interno",
+	   TO_DATE(dNFEntrada."TaxDate")   AS "Data Emissão",
+	   fNFEntrada."ItemCode"           AS "Código Item",
+	   fNFEntrada."Dscription",
+	   fNFEntrada."Quantity"           AS "Quantidade",
+	   fNFEntrada."Price"              AS "Preço",
+	   fNFEntrada."LineTotal"          AS "Valor da Linha",
+	   fNFEntrada."Project"            AS "Projeto",
+	   fNFEntrada."OcrCode"            AS "Localidade",
+	   fNFEntrada."OcrCode2"           AS "Departamento",
+	   fNFEntrada."OcrCode3"           AS "Natureza Financeira",
+	   dUsuario."U_NAME"
+  FROM OPCH dNFEntrada
+  INNER JOIN PCH1 fNFEntrada
+    ON dNFEntrada."DocEntry" = fNFEntrada."DocEntry"
+  INNER JOIN OPOR dPedido
+    ON fNFEntrada."BaseEntry" = dPedido."DocEntry"
+  INNER JOIN (SELECT DISTINCT "DocEntry",
+                              "BaseEntry"
+               FROM POR1) fPedido
+    ON dPedido."DocEntry" = fPedido."DocEntry" AND fPedido."BaseEntry" is not null
+  INNER JOIN OPRQ dSolicitacao
+    ON fPedido."BaseEntry" = dSolicitacao."DocEntry"
+  INNER JOIN OUSR dUsuario
+    ON dSolicitacao."UserSign" = dUsuario."USERID"
+WHERE dSolicitacao."UserSign" in (67,87,82) 
+  AND dNFEntrada."CANCELED" = 'N'
+  AND dPedido."CANCELED" = 'N'
+  AND dSolicitacao."CANCELED" = 'N'
+ORDER BY dNFEntrada."TaxDate"

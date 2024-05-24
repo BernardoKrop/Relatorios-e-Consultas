@@ -1,0 +1,26 @@
+/*       CONSULTA DE ANALISE DE ITENS DE ESTOQUE
+Essa consulta busca todos as ocorrencias de um item em Notas Fiscais de Entrada, com a fim de ter melhor gestão de estoque e compras
+*/
+SELECT dGrupo."ItmsGrpCod"           AS "Código Grupo",
+	   dGrupo."ItmsGrpNam"           AS "Nome Grupo",
+       fNF_Entrada."ItemCode"        AS "Código Item",
+	   fNF_Entrada."Dscription"      AS "Nome Item",	
+	   fNF_Entrada."UomCode"         AS "Unidade Medida",
+       COUNT(fNF_Entrada."ItemCode") AS "Ocorrencias em NF",
+       SUM(fNF_Entrada."Quantity")   AS "Volume Total"
+  FROM       OPCH dNF_Entrada
+  INNER JOIN PCH1 fNF_Entrada
+  	ON dNF_Entrada."DocEntry" = fNF_Entrada."DocEntry"
+  LEFT JOIN OITM dItem 
+    ON fNF_Entrada."ItemCode" = dItem."ItemCode"
+  LEFT JOIN OITB dGrupo  
+    ON dItem."ItmsGrpCod" = dGrupo."ItmsGrpCod"  
+WHERE dNF_Entrada."CANCELED" = 'N'
+  AND fNF_Entrada."Quantity" > 0
+GROUP BY fNF_Entrada."ItemCode",
+         fNF_Entrada."Dscription",
+         dGrupo."ItmsGrpCod",
+         dGrupo."ItmsGrpNam",
+         fNF_Entrada."UomCode"
+ORDER BY fNF_Entrada."UomCode" 
+  

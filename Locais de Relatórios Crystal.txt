@@ -1,0 +1,6 @@
+Notas Fiscais x Pedidos:
+  Financeiro -> Relatórios -> Relatórios eletrônicos -> Notas Fiscais x Pedidos
+
+Notas Fiscais de Entrada - Infraestrutura:
+  Compras -> Relatórios de Compras -> Relatórios eletrônicos -> Notas Fiscais de Entrada - Infraestrutura
+

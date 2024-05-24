@@ -1,0 +1,55 @@
+/*==================================================================================*/
+/*		      					Dimensão de Usuários								*/
+/*==================================================================================*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ CRIADO POR: 				30/04/2024		JOHNSON WESLEY HRENECHEN	
+ ( I ) ATUALIZADO POR:		
+		LOG: 
+
+ OBJETIVO: Dimensionalizar os dados sobre os usuários.
+ DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+ SCHEMA: SBOTRUSTAGRO
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*==================================USUSÁRIOS==================================*/	
+
+-- Iniciando a transação
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO ;
+
+	ALTER VIEW "SBOTRUSTAGRO"."vw_dUsuario"
+			(
+			"Usuario_Cod"
+			, "Usuario_varchar_Cod"  
+			, "Usuario_Nome"               
+			, "SuperUsuario"   
+			, "Departamento_Cod"                    
+			, "Dt_UltimoLogin"    
+			, "Uso_Telefone"   
+			, "Colaborador_Cod"    
+			, "Bloqueado"  		
+			, "DPPStatus"
+			, "DescontoMax"
+			) AS		
+				SELECT 
+					"USERID"                    AS "Usuario_Cod"
+					, "USER_CODE"               AS "Usuario_varchar_Cod"  
+					, "U_NAME"                  AS "Usuario_Nome"               
+					, "SUPERUSER"               AS "SuperUsuario"   -- Y sim, N não
+					, "Department"              AS "Departamento_Cod"                    
+					, "lastLogin"               AS "Dt_UltimoLogin"      
+					, "MobileUser"              AS "Uso_Telefone"   -- Y sim, N não    
+					, "INTERNAL_K"              AS "Colaborador_Cod"      
+					, "Locked"                  AS "Bloqueado"  		-- N - No , Y - Yes (Usuário bloqueado)
+					, "DPPStatus"               AS "DPPStatus"      -- B=Blocked, D=Erased, N=None, U=Unblocked
+					, "DISCOUNT"                AS "DescontoMax"    -- Disconto máximo que o usuário pode fornecer
+					FROM 
+						OUSR
+					ORDER BY
+					"USERID"  ASC ;
+
+									
+-- Concluir a transação
+	 COMMIT ;
+-- Caso algo dê errado, desfazer todas as operações da transação		
+									

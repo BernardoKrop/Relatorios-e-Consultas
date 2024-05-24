@@ -1,0 +1,88 @@
+/*==================================================================================*/
+/*		      					Dimensão de Colaboradores							*/
+/*==================================================================================*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ CRIADO POR: 				19/02/2024		JOHNSON WESLEY HRENECHEN	
+ ( I ) ATUALIZADO POR:		30/04/2024		JOHNSON WESLEY HRENECHEN
+		LOG: Um codigo para valores nulos foi adicionado, assim como adição do código de usuário
+
+ OBJETIVO: Dimensionalizar os dados sobre os colaboradores.
+ DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+ SCHEMA: SBOTRUSTAGRO
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*==================================COLABORADORES==================================*/	
+
+-- Iniciando a transação
+
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+
+	ALTER VIEW "SBOTRUSTAGRO"."vw_dColaboradores"
+			(
+				Cod_Colaborador ,
+				Cod_Usuario ,
+				Nome_Inicial , 
+				Nome_Meio ,
+				Nome_Fim , 
+				Nome_Inteiro ,
+				Sexo ,
+				Funcao ,
+				CentroCusto ,
+				Cod_Gerente ,
+				Nome_Inicial_Gestor ,
+				Nome_Inteiro_Gestor ,
+				Dt_Ini ,
+				Dt_Fim ,
+				Dt_Niver ,
+				FilalCod ,
+				DepartCod
+			) AS		
+				SELECT
+					dColaborador."empID" 					AS Cod_Colaborador ,
+					dColaborador."userId"					AS Cod_Usuario ,
+					INITCAP ( TRIM ( dColaborador."firstName"  ) )		AS Nome_Inicial ,
+					INITCAP ( TRIM ( dColaborador."middleName" ) )		AS Nome_Meio ,
+					INITCAP ( TRIM ( dColaborador."lastName"   ) )		AS Nome_Fim ,
+					INITCAP ( TRIM ( dColaborador."firstName" ) || ' ' || COALESCE ( TRIM( dColaborador."middleName" ),'' ) || ' ' || TRIM ( dColaborador."lastName" ) ) AS "Nome_Inteiro" ,
+					dColaborador."sex" 						AS Sexo ,
+					INITCAP ( TRIM (  dColaborador."jobTitle" ) )	AS Funcao ,
+					dColaborador."CostCenter" 				AS CentroCusto ,
+					dColaborador."manager" 					AS Cod_Gerente ,
+					dGestor."firstName" 					AS Nome_Inicial_Gestor ,
+					INITCAP ( TRIM ( dGestor."firstName" ) || ' ' || COALESCE ( TRIM( dGestor."middleName" ),'' ) || ' ' || TRIM ( dGestor."lastName" ) ) AS Nome_Inteiro_Gestor ,
+					dColaborador."startDate" 				AS Dt_Ini ,
+					dColaborador."termDate"					AS Dt_Fim ,
+					dColaborador."birthDate"				AS Dt_Niver ,
+					dColaborador."BPLId" 					AS FilalCod ,
+					dColaborador."dept" 					AS DepartCod
+					FROM 
+						OHEM 								AS dColaborador 
+						LEFT JOIN OHEM 						AS dGestor
+							ON dGestor."empID" = dColaborador."manager"
+				UNION ALL
+				SELECT
+					'-1'									AS Cod_Colaborador 
+					, '-1'									AS Cod_Usuario 
+					, 'ND'									AS Nome_Inicial 
+					, 'ND'									AS Nome_Meio 
+					, 'ND' 									AS Nome_Fim 
+					, 'ND' 									AS "Nome_Inteiro" 
+					, 'ND' 									AS Sexo 
+					, 'ND' 									AS Funcao 
+					, 'ND' 									AS CentroCusto 
+					, '-1' 									AS Cod_Gerente 
+					, 'ND' 									AS Nome_Inicial_Gestor 
+					, 'ND' 									AS Nome_Inteiro_Gestor 
+					, null 									AS Dt_Ini 
+					, null 									AS Dt_Fim 
+					, null 									AS Dt_Niver 
+					, '-1' 									AS FilalCod 
+					, '-1' 									AS DepartCod 
+				FROM DUMMY
+				ORDER BY
+					Cod_Colaborador ASC ;
+									
+-- Concluir a transação
+	 COMMIT ;
+-- Caso algo dê errado, desfazer todas as operações da transação
