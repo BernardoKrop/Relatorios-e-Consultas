@@ -1,0 +1,41 @@
+----------------------------------------------------------------------------------- 
+--		      					Equipamento
+-----------------------------------------------------------------------------------
+-- CRIADO POR: 				19/02/2024		JOHNSON WESLEY HRENECHEN	
+-- ( I ) ATUALIZADO POR: 	
+--			LOG: 	
+
+-- OBJETIVO: Dimensionalizar os dados dos maquináraios e equipamentos.
+-- DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+-- SCHEMA: SBOTRUSTAGRO
+
+-- Iniciando a transação
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+	CREATE VIEW "SBOTRUSTAGRO"."vw_dEquipamento"
+	(
+	Cod_Equipamento ,
+	Ano_Fabricacao ,
+	Modelo ,
+	Marca ,
+	Cod_Funcao ,
+	Dsc_Funcao ,
+	Cod_Fazenda ,
+	Frota
+	) AS
+		SELECT
+			"Code" 				AS Cod_Equipamento ,
+			"U_AnoFabri" 		AS Ano_Fabricacao ,
+			"U_DscModelo" 		AS Modelo ,
+			"U_DscMarca" 		AS Marca ,
+			"U_CodCatOper" 		AS Cod_Funcao ,
+			"U_DscCatOper" 		AS Dsc_Funcao ,
+			"U_CodigoFazenda" 	AS Cod_Fazenda ,
+			"U_CodCenCust4"		AS Frota
+			FROM
+				"@AGRI_EQPM" ;
+					
+-- Concluir a transação
+ COMMIT ;
+-- Caso algo dê errado, desfazer todas as operações da transação
+-- ROLLBACK;

@@ -1,0 +1,38 @@
+----------------------------------------------------------------------------------- 
+--		      					Fazenda e Talhão
+-----------------------------------------------------------------------------------
+-- CRIADO POR: 				19/02/2024		JOHNSON WESLEY HRENECHEN	
+-- ( I ) ATUALIZADO POR: 	
+--			LOG: 	
+
+-- OBJETIVO: Dimensionalizar os dados dos fazendas e talhões.
+-- DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+-- SCHEMA: SBOTRUSTAGRO
+
+-- Iniciando a transação
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+	CREATE VIEW "SBOTRUSTAGRO"."vw_dFazenda"
+	(
+	Cod_Fazenda ,
+	Nome_Fazenda ,
+	Cep_Fazenda ,
+	Cod_Talhao ,
+	Area_Talhao
+	) AS
+		SELECT
+			dFazenda."Code" 			AS Cod_Fazenda ,
+			INITCAP ( dFazenda."Name" ) AS Nome_Fazenda ,
+			dFazenda."U_CEP" 			AS Cep_Fazenda ,
+			dTalhao."Code" 				AS Cod_Talhao ,
+			dTalhao."U_QtdAreaPro" 		AS Area_Talhao
+			FROM 
+				"@AGRI_UNPF" AS dFazenda
+				LEFT JOIN "@AGRI_UNPT" AS dTalhao
+					ON dFazenda."Code" = dTalhao."U_CodUnPrFaz" ;
+					
+-- Concluir a transação
+ COMMIT ;
+-- Caso algo dê errado, desfazer todas as operações da transação
+-- ROLLBACK;
+		
