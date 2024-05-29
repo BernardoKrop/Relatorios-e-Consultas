@@ -2,36 +2,36 @@
 
 ## Geral
 
-Os nomes das tabelas e colunas devem estar **minúsculas** e as palavras devem ser separadas por **underscore**, seguindo o padrão [snake case](https://en.wikipedia.org/wiki/Snake_case). E todos os termos devem estar em inglês, exceto alguns termos que não há tradução apropriada para o **inglês**. 
-Sempre prefira nomes descritivos, evitando ao máximo contrações.
+Os nomes das tabelas e colunas devem ter letra maiúscula na primeira letra de cada palavra, sem espaços entre palavras, seguindo o padrão [UpperCamelCase](https://pt.wikipedia.org/wiki/CamelCase#cite_note-N%C3%A3o-nomeado-xZat-1-7), com siglas tendo todas suas letras capitalizadas. Todos os termos devem estar em português, exceto alguns termos que não há tradução apropriada. 
+Sempre prefira nomes descritivos, evitando ao máximo contradições e tentando manter os nomes com menos de 20 caracteres.
 
-## Tabelas
+## Tabelas - Alias
 
 Os nomes das tabelas devem estar no **plural**.
 
 Ex:
-- **Bom**: `users`, `posts`, `roles`, `room_categories`
-- **Ruim**: `user`, `post`, `grupos`, `quarto_categoria`
+- **Bom**: `Usuarios`, `Posts`, `Grupos`
+- **Ruim**: `user`, `Post`, `grupo`
 
-## Colunas
+## Colunas - Alias
 
-Os nomes das colunas devem estar no **singular**.
+Os alias (Apelidos) das colunas devem estar no **singular**. Caso a consulta seja para um usuario final, deve estar formatado para tal.
 
 Ex:
-- **Bom**: `cpf`, `name`, `age`
-- **Ruim**: `endereco`, `posts`, `idade`
+- **Bom**: `CPF`, `Nome`, `Idade`, `Número Nota`
+- **Ruim**: `Cpf`, `Nomes`, `idade`, `NumeroNota`
 
 
 ## Foreign keys
 
-Todas as foreign keys devem seguir o padrão `nome_da_tabela_no_singular_id`.
+Todas as foreign keys devem seguir o padrão `NomeDaTabelaNoSingularId`.
 
-Por exemplo, caso a tabela `users` tenha um relacionameto com a tabela `roles`, o nome da coluna foreign key da tabela `users` deve ser `role_id`.
+Por exemplo, caso a tabela `Produtos` tenha um relacionameto com a tabela `Grupos`, o nome da coluna foreign key da tabela `Produtos` deve ser `GrupoId`.
 
-## Primary keys
+## Nomenclatura de views
 
-A primary key de toda tabela deve ser uma coluna de inteiros com incremento automático, chamada `id`.
+A nomenclatura geral das views deve sempre comçar com `vw_` antes do nome da view, com o tipo da view sendo especificado pelo [modelo estrela](https://www.databricks.com/br/glossary/star-schema) de classificação de tabelas entre Fato e Dimensão. As letras minúsculas "d", "f" ou "c" antes do nome da view devem ser usadas antes do nome da view para especificar se ela é uma view de uma tabela Fato(f), Dimensão(d) ou se é uma consulta estruturada de SQL(c)
 
-## Timestamps
-
-Toda tabela deve definir duas colunas para colocar os timestamps: `created_at` e `updated_at`. A coluna `created_at` recebe automaticamente o timestamp do momento que o registro for criado. A coluna `updated_at` recebe automaticamente o timestamp do momento que o registro for alterado. 
+Ex:
+- **Bom**: `vw_dEquipamentos`, `vw_cDocsImportados`, `vw_fPedidos`
+- **Ruim**: `vw_Equipamento`, `vw_documento` ,`vw_dpedido`
