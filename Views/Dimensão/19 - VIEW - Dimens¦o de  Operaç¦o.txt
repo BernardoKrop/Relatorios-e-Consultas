@@ -1,0 +1,27 @@
+----------------------------------------------------------------------------------- 
+--		      					Atualização de Sistema
+-----------------------------------------------------------------------------------
+-- CRIADO POR: 				19/02/2024		JOHNSON WESLEY HRENECHEN	
+-- ( I ) ATUALIZADO POR: 	
+--			LOG: 	
+
+-- OBJETIVO: Indicativo de ultima atualização de sistema.
+-- DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+-- SCHEMA: SBOTRUSTAGRO
+
+-- Iniciando a transação
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+
+CREATE VIEW "SBOTRUSTAGRO"."vw_dAtualizacao"
+	(
+	
+	) AS
+		SELECT 
+			CAST ( CURRENT_DATE || ' ' || CURRENT_TIME AS TIMESTAMP ) AS Atualizacao 
+			FROM DUMMY;
+-- Concluir a transação
+COMMIT;
+-- Caso algo dê errado, desfazer todas as operações da transação
+-- ROLLBACK;
+		 

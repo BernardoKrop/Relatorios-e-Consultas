@@ -1,0 +1,32 @@
+-----------------------------------------------------
+--30/10/2023		DIMENSÃO NATUREZA DE MANUTENCAO
+-----------------------------------------------------
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS ;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_dNatureza_Manutencao"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dNatureza_Manutencao"
+		(
+		nk_Codigo ,
+		Nome ,
+		"Data de Criação" ,
+		"Data de Atualização" ,
+		Status
+		) AS
+			SELECT
+				"Code" AS "nk_Codigo",
+				INITCAP ( "Name" ) AS "Nome",
+				CAST ( "CreateDate" AS DATE ) AS "Data de Criação",
+				CAST ( "UpdateDate" AS DATE ) AS "Data de Atualização", --A Ambas datas estão trazidas, para possibilitar no futuro a criação de Surrogate Key
+				CASE "U_Status"
+					WHEN 'A'
+					THEN 'Aberto'
+					WHEN 'I'
+					THEN 'Inativo'
+					ELSE null
+				END AS "Status"
+				FROM "@AGRI_CLAM"
+				WITH READ ONLY ;
+				
+COMMIT ;
+--ROLLBACK

@@ -1,0 +1,65 @@
+--------------------------------------------------------
+--16/10/2023		VIEW CREATE
+--------------------------------------------------------
+
+-- Visualização para conexão do BD com o sistema de inventário
+
+BEGIN TRANSACTION ;
+
+	SET SCHEMA SBO_MULTIFAZENDAS ;
+		--DROP VIEW "SBO_MULTIFAZENDAS"."vw_dInventario"
+		CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dInventario"
+			(
+		Num_Item ,
+		Descricao_do_Item ,
+		Num_Inventario	
+		) AS
+			SELECT
+				"ItemCode" AS Num_Item ,
+				"ItemName" AS Descricao_do_Item , 
+				"InventryNo" AS Num_Inventario
+			 	FROM 
+			 		OITM 
+			 	WHERE
+			 		"ItemCode" LIKE 'IMB%'
+			 	ORDER BY
+			 		"ItemCode" ASC ;
+
+ 		
+COMMIT ;
+--ROLLBACK ;
+
+/*SELECT * FROM "vw_dInventario" */
+
+--------------------------------------------------------
+--30/10/2023		DIMENSÃO INVENTARIO
+--------------------------------------------------------
+
+-- Visualização para conexão do BD com o sistema de inventário
+
+BEGIN TRANSACTION ;
+
+	SET SCHEMA SBO_MULTIFAZENDAS ;
+		--DROP VIEW "SBO_MULTIFAZENDAS"."vw_dInventario"
+		CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dInventario"
+			(
+		Num_Item ,
+		Descricao_do_Item ,
+		Num_Inventario	
+		) AS
+			SELECT
+				"ItemCode" AS Num_Item ,
+				INITCAP ( "ItemName" ) AS Descricao_do_Item , 
+				"InventryNo" AS Num_Inventario
+			 	FROM 
+			 		OITM 
+			 	WHERE
+			 		"ItemCode" LIKE 'IMB%'
+			 	ORDER BY
+			 		"ItemCode" ASC ;
+
+ 		
+COMMIT ;
+--ROLLBACK ;
+
+/*SELECT * FROM "vw_dInventario" */

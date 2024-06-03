@@ -1,0 +1,65 @@
+/*==================================================================================*/
+/*		      					Dimensão de Itens									*/
+/*==================================================================================*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ CRIADO POR: 				30/04/2024		JOHNSON WESLEY HRENECHEN	
+ ( I ) ATUALIZADO POR:
+		LOG: 
+
+ OBJETIVO: Dimensionalizar os dados sobre os grupos de itens.
+ DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+ SCHEMA: SBOTRUSTAGRO
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*==================================COLABORADORES==================================*/	
+
+-- Iniciando a transação
+
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+
+	ALTER VIEW "SBOTRUSTAGRO"."vw_dItem"
+			(
+		    "Item_Cod"  
+		    , "Item_Nome"  
+		    , "Grupo_Cod"  
+		    , "UnidadeCompra"  
+		    , "Cancelado"  
+		    , "Dt_Hrs_Criado"  
+		    , "Dt_Hrs_Atualizacao"  
+			) AS		
+				SELECT
+				    dItem."ItemCode"              AS "Item_Cod"  
+				    , dItem."ItemName"            AS "Item_Nome"  
+				    , dItem."ItmsGrpCod"          AS "Grupo_Cod"  
+				    , dItem."BuyUnitMsr"         	AS "UnidadeCompra"  
+				    , dItem."Canceled"            AS "Cancelado"    
+				    , TO_TIMESTAMP( TO_VARCHAR( dItem."CreateDate" ,
+			 			'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(dItem."CreateTS"),
+			 			6,
+			 			'0') ,
+			 			'YYYYMMDD HH24MISS') AS "Dt_Hrs_Criado"  
+				    , TO_TIMESTAMP( TO_VARCHAR( dItem."UpdateDate"  ,
+			 			'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(dItem."UpdateTS"),
+			 			6,
+			 			'0') ,
+			 			'YYYYMMDD HH24MISS') AS "Dt_Hrs_Atualizacao" 				    
+					FROM 
+						OITM				AS dItem
+				UNION ALL
+				SELECT
+				    '-1'              		AS "Item_Cod"  
+				    , 'ND'           		AS "Item_Nome"  
+				    , '-1'      		    AS "Grupo_Cod"  
+				    , 'ND'		         	AS "UnidadeCompra"  
+				    , 'ND'		            AS "Cancelado"  
+				    , null			        AS "Dt_Hrs_Criado"  
+				    , null			        AS "Dt_Hrs_Atualizacao"  
+					FROM
+						DUMMY
+				ORDER BY
+					"Item_Cod" ASC ;
+									
+-- Concluir a transação
+	 COMMIT ;
+-- Caso algo dê errado, desfazer todas as operações da transação

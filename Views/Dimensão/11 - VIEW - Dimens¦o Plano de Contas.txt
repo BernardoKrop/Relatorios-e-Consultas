@@ -1,0 +1,62 @@
+----------------------------------------------------------------------------------- 
+--		      					PLANO DE CONTAS
+-----------------------------------------------------------------------------------
+-- CRIADO POR: 				??/??/2023		RONALDO JUNQUEIRA	
+-- ( I ) ATUALIZADO POR: 	17/01/2024		JOHNSON WESLEY HRENECHEN
+--			LOG: Adequação das nomenclaturas, documentação, controle de transação e tratamento das descrições e contas ao padrão TRUST.
+-- ( II ) ATUALIZADO POR: 	
+
+-- OBJETIVO: Dimensionalizar os dados dos planos de conta.
+-- DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+-- SCHEMA: SBOTRUSTAGRO
+-- OBSERVAÇÃO: Nível 1 = N1, portanto ( N1 = 10^14 ; N2 = 1.01 ; N3 = 1.01.01 ; N4 = 1.01.01.01 ; N5 = 1.01.01.01.001 )
+
+-- Iniciando a transação e definindo o esquema para a consulta
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+
+-- Criando uma visão para uso no Power BI
+	CREATE VIEW "SBOTRUSTAGRO"."vw_dPlanoDeContas"
+		(
+		 "Conta_N1",
+		 "Nome_N1",
+		 "Conta_N2",
+		 "Nome_N2",
+		 "Conta_N3",
+		 "Nome_N3",
+		 "Conta_N4",
+		 "Nome_N4",
+		 "Conta_N5",
+		  "Nome_N5",
+		 "Orçamento"		
+		) AS
+			SELECT
+				 COALESCE ( dPlanoDeContas5."AcctCode" , 'null' ) AS "Conta_N1",
+				 COALESCE ( INITCAP ( dPlanoDeContas5."AcctName" ) , 'null' ) AS "Nome_N1",
+				 COALESCE ( dPlanoDeContas4."AcctCode" , 'null' ) AS "Conta_N2",
+				 COALESCE ( INITCAP ( dPlanoDeContas4."AcctName" ) , 'null' ) AS "Nome_N2",
+				 COALESCE ( dPlanoDeContas3."AcctCode" , 'null' ) AS "Conta_N3",
+				 COALESCE ( INITCAP ( dPlanoDeContas3."AcctName" ) , 'null' ) AS "Nome_N3",
+				 COALESCE ( dPlanoDeContas2."AcctCode" , 'null' ) AS "Conta N4",
+				 COALESCE ( INITCAP ( dPlanoDeContas2."AcctName" ) , 'null' ) AS "Nome_N4",
+				 COALESCE ( dPlanoDeContas."AcctCode" , 'null' )	AS "Conta_N5",
+				 COALESCE ( INITCAP ( dPlanoDeContas."AcctName" ) , 'null' ) AS "Nome_N5",
+				 dPlanoDeContas."Budget" AS "Orçamento"
+			FROM OACT AS dPlanoDeContas
+			    -- Unindo com a tabela de contas para obter detalhes do Nível 2
+			    LEFT JOIN OACT AS dPlanoDeContas2
+			        ON dPlanoDeContas."FatherNum" = dPlanoDeContas2."AcctCode"
+			    -- Unindo com a tabela de contas para obter detalhes do Nível 3
+			    LEFT JOIN OACT AS dPlanoDeContas3
+			        ON dPlanoDeContas2."FatherNum" = dPlanoDeContas3."AcctCode"
+			    -- Unindo com a tabela de contas para obter detalhes do Nível 4
+			    LEFT JOIN OACT AS dPlanoDeContas4
+			        ON dPlanoDeContas3."FatherNum" = dPlanoDeContas4."AcctCode"
+			    -- Unindo com a tabela de contas para obter detalhes do Nível 5
+			    LEFT JOIN OACT AS dPlanoDeContas5
+			        ON dPlanoDeContas4."FatherNum" = dPlanoDeContas5."AcctCode" ;
+					
+-- Concluir a transação
+-- COMMIT ;
+-- Caso algo dê errado, desfazer todas as operações da transação
+-- ROLLBACK;

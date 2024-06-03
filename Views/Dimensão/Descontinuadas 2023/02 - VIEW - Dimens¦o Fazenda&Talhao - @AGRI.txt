@@ -1,0 +1,168 @@
+/* Dimensão @AGRI Fazenda + Talhões */
+
+SELECT
+	A."Code" AS Fazenda_Cod ,
+	A."Name" AS Fazenda_Nome ,
+	A."U_CEP" AS Fazenda_CEP ,
+	A."U_NomeMunici" AS Fazenda_Munic ,
+	B."Code" AS Talhao_Cod ,
+	B."Name" AS Talhao_Nome ,
+	B."U_QtdAreaPro" AS Talhao_AreaProd
+	FROM
+		"@AGRI_UNPF" AS A
+		LEFT JOIN "@AGRI_UNPT" AS B
+			ON A."Code" = B."U_CodUnPrFaz"
+
+--------------------------------------------------------
+			CREATE VIEW 
+-------------------------------------------------------
+
+/* Dimensão @AGRI Fazenda + Talhões */
+
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dFazenda"
+		(
+		Fazenda_Cod ,
+		Fazenda_Nome ,
+		Fazenda_CEP ,
+		Fazenda_Munic ,
+		Talhao_Cod ,
+		Talhao_Nome ,
+		Talhao_AreaProd		
+	) AS
+		SELECT
+			A."Code" AS Fazenda_Cod ,
+			A."Name" AS Fazenda_Nome ,
+			A."U_CEP" AS Fazenda_CEP ,
+			A."U_NomeMunici" AS Fazenda_Munic ,
+			B."Code" AS Talhao_Cod ,
+			B."Name" AS Talhao_Nome ,
+			B."U_QtdAreaPro" AS Talhao_AreaProd
+			FROM
+				"@AGRI_UNPF" AS A
+				LEFT JOIN "@AGRI_UNPT" AS B
+					ON A."Code" = B."U_CodUnPrFaz" ;
+--COMMIT ;
+--ROLLBACK ;
+
+/* SELECT * FROM "vw_dFazenda" */
+
+--------------------------------------------------------
+--10/10/2023		UPDATE VIEW
+-------------------------------------------------------
+
+
+/* Dimensão @AGRI Fazenda + Talhões */
+
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_dFazenda"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dFazenda"
+		(
+		Fazenda_Cod ,
+		Fazenda_Nome ,
+		Fazenda_CEP ,
+		Fazenda_Munic ,
+		Talhao_Cod ,
+		Talhao_Nome ,
+		Talhao_AreaProd		
+	) AS
+		SELECT
+			A."Code" AS Fazenda_Cod ,
+			A."Name" AS Fazenda_Nome ,
+			COALESCE ( A."U_CEP" , '-1' ) AS Fazenda_CEP ,
+			A."U_NomeMunici" AS Fazenda_Munic ,
+			COALESCE ( B."Code", 'ND' ) AS Talhao_Cod ,
+			COALESCE ( B."Name" , 'ND' ) AS Talhao_Nome ,
+			COALESCE ( B."U_QtdAreaPro" , '0' ) AS Talhao_AreaProd
+			FROM
+				"@AGRI_UNPF" AS A
+				LEFT JOIN "@AGRI_UNPT" AS B
+					ON A."Code" = B."U_CodUnPrFaz" ;
+COMMIT ;
+--ROLLBACK ;
+
+/* SELECT * FROM "vw_dFazenda" */
+
+--------------------------------------------------------
+--18/10/2023		UPDATE VIEW
+-------------------------------------------------------
+
+
+/* Dimensão @AGRI Fazenda + Talhões */
+
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_dFazenda"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dFazenda"
+		(
+		Fazenda_Cod ,
+		Fazenda_Nome ,
+		Fazenda_CEP ,
+		Fazenda_Munic ,
+		Fazenda_Filial ,
+		Talhao_Cod ,
+		Talhao_Nome ,
+		Talhao_AreaProd		
+	) AS
+		SELECT
+			A."Code" AS Fazenda_Cod ,
+			A."Name" AS Fazenda_Nome ,
+			COALESCE ( A."U_CEP" , '-1' ) AS Fazenda_CEP ,
+			A."U_NomeMunici" AS Fazenda_Munic ,
+                        COALESCE ( A."U_CodigoFilial", -1 ) AS Fazenda_Filial ,
+			COALESCE ( B."Code", 'ND' ) AS Talhao_Cod ,
+			COALESCE ( B."Name" , 'ND' ) AS Talhao_Nome ,
+			COALESCE ( B."U_QtdAreaPro" , '0' ) AS Talhao_AreaProd
+			FROM
+				"@AGRI_UNPF" AS A
+				LEFT JOIN "@AGRI_UNPT" AS B
+					ON A."Code" = B."U_CodUnPrFaz" ;
+COMMIT ;
+--ROLLBACK ;
+
+/* SELECT * FROM "vw_dFazenda" */
+
+-------------------------------------------------------
+--30/10/2023		DIMENSÃO FAZENDA
+-------------------------------------------------------
+
+
+/* Dimensão @AGRI Fazenda + Talhões */
+
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_dFazenda"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dFazenda"
+		(
+		Fazenda_Cod ,
+		Fazenda_Nome ,
+		Fazenda_CEP ,
+		Fazenda_Munic ,
+		Fazenda_Filial ,
+		Talhao_Cod ,
+		Talhao_Nome ,
+		Talhao_AreaProd		
+	) AS
+		SELECT
+			A."Code" AS Fazenda_Cod ,
+			INITCAP ( A."Name" ) AS Fazenda_Nome ,
+			COALESCE ( A."U_CEP" , '-1' ) AS Fazenda_CEP ,
+			A."U_NomeMunici" AS Fazenda_Munic ,
+                        COALESCE ( A."U_CodigoFilial", -1 ) AS Fazenda_Filial ,
+			COALESCE ( B."Code", 'ND' ) AS Talhao_Cod ,
+			COALESCE ( INITCAP ( B."Name" ) , 'ND' ) AS Talhao_Nome ,
+			COALESCE ( B."U_QtdAreaPro" , '0' ) AS Talhao_AreaProd
+			FROM
+				"@AGRI_UNPF" AS A
+				LEFT JOIN "@AGRI_UNPT" AS B
+					ON A."Code" = B."U_CodUnPrFaz" ;
+COMMIT ;
+--ROLLBACK ;
+
+/* SELECT * FROM "vw_dFazenda" */

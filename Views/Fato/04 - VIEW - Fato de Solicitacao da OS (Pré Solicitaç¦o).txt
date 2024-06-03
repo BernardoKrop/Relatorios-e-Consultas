@@ -1,0 +1,51 @@
+/*==================================================================================*/
+/*		      			Ordem de Serviços Requisitados								*/
+/*==================================================================================*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ CRIADO POR: 				23/04/2024		JOHNSON WESLEY HRENECHEN	
+ ( I ) ATUALIZADO POR: 		
+    LOG: 	
+
+ OBJETIVO: 	Uso para Power Bi
+ DESCRIÇÃO: Permite visualizar e conectar a tabela fato sobre as autorizações, com as devidas etapas dos documentos de marketing.
+ SCHEMA: SBOTRUSTAGRO
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*++++++++++++++++++++++++++++++++CRIAÇÃO DE VIEW++++++++++++++++++++++++++++++++*/
+
+BEGIN TRANSACTION ;
+SET SCHEMA SBOTRUSTAGRO ;
+
+CREATE VIEW "SBOTRUSTAGRO"."vw_fAgroSolicitacao"
+	(
+	"Entrada_Cod"
+	, "Interno_Cod"
+	, "Fazenda_Nome" 
+	, "Criador"
+	, "Dt_OrdemServico"
+	, "StatusOperacao"
+	, "Status"
+	, "Item_Cod"
+	, "CCNatureza_Cod"
+	, "BaseEntradaSol_Cod"
+	) AS 
+/*++++++++++++++++++++++++++++++++CORPO DA CONSULTA++++++++++++++++++++++++++++++++*/
+
+SELECT
+	fAgroSolicitacao."DocEntry" 			AS "Entrada_Cod"
+	, dAgroOrdemServico."DocNum" 			AS "Interno_Cod"
+	, dAgroOrdemServico."U_DscFazenda"		AS "Fazenda_Nome" 
+	, dAgroOrdemServico."Creator"			AS "Criador" 
+	, dAgroOrdemServico."U_DtEntrada"		AS "Dt_OrdemServico"
+	, fAgroSolicitacao."U_StatusOperacao"	AS "StatusOperacao"		-- D - Diagnóstico | P - Aguardando Peça | S - Aguardando Serviço | E - Em Execução | F - Finalizado | N - Aguardando NF do Fornecedor
+	, dAgroOrdemServico."U_Status"			AS "Status"
+	, fAgroSolicitacao."U_CodItem"			AS "Item_Cod"
+	, dAgroOrdemServico."U_CodEquipam" 		AS "CCNatureza_Cod"
+	, fAgroSolicitacao."U_CodCompra"		AS "BaseEntradaSol_Cod"
+	
+	FROM
+		"@AGRI_OSOF"				AS dAgroOrdemServico		
+		INNER JOIN	"@AGRI_OSOA"	AS fAgroSolicitacao
+			ON dAgroOrdemServico."DocEntry" = fAgroSolicitacao."DocEntry"
+		WHERE
+			dAgroOrdemServico."U_Status" <> 'C'

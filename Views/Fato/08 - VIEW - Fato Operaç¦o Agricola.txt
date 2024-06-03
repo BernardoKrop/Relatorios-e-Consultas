@@ -1,0 +1,178 @@
+----------------------------------------------------------------------------------- 
+--		      					Opoeração Agrícola
+-----------------------------------------------------------------------------------
+-- CRIADO POR: 				19/02/2024		JOHNSON WESLEY HRENECHEN	
+-- ( I ) ATUALIZADO POR: 	26/02/2024		JOHNSON WESLEY HRENECHEN
+--			LOG: 	Adicionado o Custo de Maquinário externo,os termos internos externso referen-se a: Interno custo exposto pelo addon @AGRI
+--	externo significa advindo das Notas Fiscais de Entrada (PCH1), e por tanto capturando todo o valor, com base nos códigos e presença de frota alocada.
+
+-- ( II ) ATUALIZADO POR 	26/03/2024		JOHNSON WESLEY HRENECHEN
+--			LOG: 
+
+-- OBJETIVO: Dimensionalizar os dados das operações agrícolas.
+-- DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+-- SCHEMA: SBOTRUSTAGRO
+
+
+-- Iniciando a transação
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+
+
+
+ALTER VIEW "SBOTRUSTAGRO"."vw_fOperacaoAgricola"
+	(
+	Cod_Apontamento ,
+	"Status" ,
+	Cod_Talhao ,
+	Cod_Operacao ,
+	Dt_Inicio ,
+	Dt_Fim ,
+	Hrs_Operacao ,
+	Cod_Maquina ,
+	Hectare ,
+	Meta ,
+	Horimetro ,
+	Custo_Maquina_Interno ,
+	Custo_Maquina_Externo ,
+	Cod_Colaborador ,
+	Hrs_Colaborador ,
+	Cod_MotivoParada ,
+	Cod_TipoParada ,
+	Hrs_Paradas ,
+	Custo_Colaborador ,
+	Custo_Insumo ,
+	Custo_Tarifeiro
+	) AS 
+		SELECT 
+		    fOperacao."DocEntry" 					AS Cod_Apontamento, -- Chave primária da operação
+		    fOperacao."U_Status"					AS "Status" ,
+		    fTalhao."U_CodTalhao" 					AS Cod_Talhao, -- Código do talhão
+		    fOperacao."U_CodOperaca" 				AS Cod_Operacao, -- Código da operação
+		    CAST(fOperacao."U_Data" AS DATE) 		AS Dt_Inicio, -- Data de início da operação
+		    CAST(fOperacao."U_DataFinal" AS DATE) 	AS Dt_Fim, -- Data final da operação
+		    -- Conversão do total de horas da operação para o formato de tempo HH:MM:SS (Nativamente é HHMM , integer)
+			-- Para isto é necessário padronizar a coluna a sempre ter 4 caracteres para HH:MM,e incluindo a constante :00, para formatar a coluna como TIME.
+		    CAST(
+		        CONCAT(
+		            CONCAT(
+		                LEFT(LPAD(TO_NVARCHAR(fOperacao."U_TotalHoras"), 4, '0'), 2),
+		                ':'
+		            ),
+		            RIGHT(LPAD(TO_NVARCHAR(fOperacao."U_TotalHoras"), 4, '0'), 2)
+		            )
+		         AS TIME
+		    ) 										AS Hrs_Operacao,
+		    fMaquina."U_CodEquipam" 				AS Cod_Maquina, -- Código da máquina
+		    fMaquina."U_AreaTrabalhada" 			AS Hectare, -- Área trabalhada pela máquina
+		    fOperacao."U_Meta" 						AS Meta, -- Meta de operação
+		    -- Conversão do horímetro para o formato de tempo HH:MM:SS, este que originalmente vinha como hh,mm em tipo decimal.
+			-- Isto foi algo bem dificil de resolver devido a problema com o SAP. Solução: Adicionar as horas em uma data qualquer,
+			-- e então extrair as horas e com este resultado formatar em tempo.
+			CAST (
+				SUBSTRING ( 
+					ADD_SECONDS ( fOperacao."U_Data" , 
+						FLOOR ( fMaquina."U_Total" ) * 3600	+
+						( ( MOD	( fMaquina."U_Total"  , 1 ) * 60 )* 60) -- Multiplica em segundo e então em minútos
+					) ,
+					LOCATE ( 
+						ADD_SECONDS ( fOperacao."U_Data" , 
+							FLOOR ( fMaquina."U_Total" ) * 3600	+
+							( ( MOD	( fMaquina."U_Total"  , 1 ) * 60 )* 60) ) ,
+						' ' , 1
+						) + 1 , 8 -- Qntd de caracteres em um formato de hora, minuto e segundo considerando os ' : '			
+				) AS TIME ) AS Horimetro ,
+		    CAST ( fMaquina."U_CustoEquipamento" AS DECIMAL(10,2) )			AS Custo_Maquina_Interno , -- Com uso da fCombustivel e o valor de consumo de lá, pode-se subtrair este, para chegar ao resultado de CRM.
+		     CAST (
+		     	COALESCE (
+			     (
+			        SELECT
+			            ( SUM(fNF_Compras."OpenSum") * SUM (fMaquina."U_Total") ) / 2
+			        FROM
+			            PCH1 AS fNF_Compras
+			            JOIN OPCH AS dNF_Compra ON fNF_Compras."DocEntry" = dNF_Compra."DocEntry"
+			        WHERE
+			            fNF_Compras."OcrCode4" = fMaquina."U_CodEquipam"
+			            AND dNF_Compra."CANCELED" NOT IN ('Y', 'C')
+			            AND (fNF_Compras."ItemCode" LIKE 'PEC%' 
+			            	OR fNF_Compras."ItemCode" LIKE 'SMV%'
+			            	OR fNF_Compras."ItemCode" LIKE 'LUB%'
+			            	OR fNF_Compras."ItemCode" LIKE 'PNU%')
+			            AND MONTH(dNF_Compra."TaxDate") = MONTH(fOperacao."U_Data")
+			            AND YEAR(dNF_Compra."TaxDate") = YEAR(fOperacao."U_Data")
+			    )  /
+				SUM (fMaquina."U_Total") OVER ( PARTITION BY YEAR ( fMaquina."U_Data" ), MONTH ( fMaquina."U_Data" ) ) ,
+				0 ) AS DECIMAL(10,2) ) AS Custo_Maquina_Externo  ,
+		    fHomen."U_CodColabor" 					AS Cod_Colaborador, 
+		    -- Conversão das horas trabalhadas do colaborador para o formato de tempo HH:MM:SS, elas era originalmente HHMM em Integer
+		    CAST (
+		    	TO_VARCHAR(
+		        	LPAD(
+		            	TO_VARCHAR(FLOOR((FLOOR(SUM(fHomen."U_HrsTrabalh") / 100) * 60 + MOD(SUM(fHomen."U_HrsTrabalh"), 100)) / 60)),
+		            	2, '0'
+		        	)
+		    	) || ':' ||
+		    	LPAD(
+		       		TO_VARCHAR(MOD((FLOOR(SUM(fHomen."U_HrsTrabalh") / 100) * 60 + MOD(SUM(fHomen."U_HrsTrabalh"), 100)), 60)),
+		        	2, '0'
+		    	) || ':00'
+		    AS TIME ) 								AS Hrs_Colaborador,
+		    fParada."U_CodMotivoParada" 			AS Cod_MotivoParada, -- Código do motivo da parada
+		    fParada."U_TipoMotivoParada" 			AS Cod_TipoParada, -- Tipo do motivo da parada (P = planejado)
+		    -- Conversão das horas paradas para o formato de tempo HH:MM:SS estando no modelo HMM Integer
+		    CAST(
+		        CONCAT(
+		            CONCAT(
+		                LEFT(LPAD(TO_NVARCHAR(fParada."U_HorasParadas"), 4, '0'), 2),
+		                ':'
+		            ),
+		           RIGHT(LPAD(TO_NVARCHAR(fParada."U_HorasParadas"), 4, '0'), 2)
+		        ) AS TIME
+		    ) 										AS Hrs_Paradas,
+		    SUM(fHomen."U_Custo") 					AS Custo_Colaborador, -- Folha
+		    SUM ( fTalhao."U_CustoInsum" )  		AS Custo_Insumo , -- Aplicação
+		    SUM ( fTalhao."U_CustoTarefeiros" ) 	AS Custo_Tarifeiro  -- Terceiros
+		FROM 
+		    "@AGRI_AOPA" AS fOperacao
+		    LEFT JOIN "@AGRI_AOPT" AS fTalhao 
+		    	ON fOperacao."DocEntry" = fTalhao."DocEntry"
+		    LEFT JOIN "@AGRI_AOPE" AS fMaquina
+		    	ON fOperacao."DocEntry" = fMaquina."DocEntry"
+		    LEFT JOIN "@AGRI_AOPC" AS fHomen
+		    	ON fOperacao."DocEntry" = fHomen."DocEntry"
+		    LEFT JOIN "@AGRI_AOPM" AS fParada
+		    	ON fOperacao."DocEntry" = fParada."DocEntry"
+		WHERE
+		    fOperacao."Canceled" <> 'Y'
+--		    AND fOperacao."U_CodOperaca" = '000010'
+--		    AND fTalhao."U_CodTalhao"  = 'TALFZSM01'
+--		    AND fOperacao."U_Data" BETWEEN '2024-02-01' AND '2024-02-29'
+--		    AND fOperacao."U_Status" = 'A'
+
+			--AND fMaquina."U_CodEquipam" = '600923'
+		GROUP BY
+		    fOperacao."DocEntry" ,
+		    fTalhao."U_CodTalhao" ,
+		    fOperacao."U_CodOperaca" ,
+		    fOperacao."U_Data" ,
+		    fOperacao."U_DataFinal" , 
+		    fMaquina."U_CodEquipam" ,
+		    fMaquina."U_CustoEquipamento" ,
+		    fHomen."U_CodColabor" ,
+		    fOperacao."U_TotalHoras", 
+		    fMaquina."U_AreaTrabalhada",
+		    fOperacao."U_Meta", 
+		    fMaquina."U_Total" , 
+		    fParada."U_CodMotivoParada" , 
+		    fParada."U_TipoMotivoParada" ,
+		    fMaquina."U_Data" , 
+		    fOperacao."U_Status" ,
+		    fParada."U_HorasParadas"
+		ORDER BY
+		    Dt_Inicio;
+
+-- Concluir a transação
+COMMIT;
+-- Caso algo dê errado, desfazer todas as operações da transação
+-- ROLLBACK;
+		    

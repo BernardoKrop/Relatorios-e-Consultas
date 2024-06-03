@@ -30,7 +30,7 @@ Por exemplo, caso a tabela `Produtos` tenha um relacionameto com a tabela `Grupo
 
 ## Nomenclatura de views
 
-A nomenclatura geral das views deve sempre comçar com `vw_` antes do nome da view, com o tipo da view sendo especificado pelo [modelo estrela](https://www.databricks.com/br/glossary/star-schema) de classificação de tabelas entre Fato e Dimensão. As letras minúsculas `d`, `f` ou `c` antes do nome da view devem ser usadas antes do nome da view para especificar se ela é uma view de uma tabela Fato(f), Dimensão(d) ou se é uma consulta estruturada de SQL(c)
+A nomenclatura geral das views deve sempre comçar com `vw_` antes do nome da view, com o tipo da view sendo especificado pelo [modelo estrela](https://www.databricks.com/br/glossary/star-schema) de classificação de tabelas entre Fato e Dimensão. As letras minúsculas `d`, `f` ou `c` antes do nome da view devem ser usadas antes do nome da view para especificar se ela é uma view de uma tabela Fato `f`, Dimensão `d` ou se é uma consulta estruturada de SQL`c`
 
 Ex:
 - **Bom**: `vw_dEquipamentos`, `vw_cDocsImportados`, `vw_fPedidos`

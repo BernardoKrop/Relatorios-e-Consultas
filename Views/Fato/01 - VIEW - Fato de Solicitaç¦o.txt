@@ -1,0 +1,113 @@
+/*==================================================================================*/
+/*		      					Fato de Solicitação									*/
+/*==================================================================================*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ CRIADO POR: 				30/04/2024 		JOHNSON WESLEY HRENECHEN
+	LOG: Recuperado da declaração de criação
+
+ OBJETIVO: Utilizar para desenvolvimento de relatório de fluxo de notas.
+ DESCRIÇÃO: Identifica os pedidos não canceladas do sistema.
+ SCHEMA: SBOTRUSTAGRO
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*==================================SOLICITAÇÃO==================================*/	
+
+-- Iniciando a transação
+
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+
+ALTER VIEW "SBOTRUSTAGRO"."vw_fSolicitacao" (
+	 "Entrada_Cod",
+	 "Objeto_Tipo",
+	 "Interno_Cod",
+	 "Utilidade_Cod",
+	 "Status",
+	 "Solicitante",
+	 "Dt_Hrs_Lancamento",
+	 "Dt_Vencimento",
+	 "Dt_Hrs_Atualizacao",
+	 "Dt_Necessaria",
+	 "Item_Cod",
+	 "Quantidade" ,
+	 "Titular_Cod",
+	 "Filial_Cod",
+	 "Unidade",
+	 "Departamento",
+	 "Comentarios" ,
+	 "Solicitacao_Tipo" ,
+	 "Solicitante_Cod" 
+	 ) AS SELECT
+			 dSolicitacao."DocEntry" AS "Entrada_Cod" ,
+			 dSolicitacao."ObjType" AS "Objeto_Tipo" ,
+			 dSolicitacao."DocNum" AS "Interno_Cod" ,
+			 COALESCE ( fSolicitacaoExtendida."MainUsage",
+			 '-1' ) AS "Utilidade_Cod" --Flag interna para indicar CFOP
+		 ,
+			 dSolicitacao."DocStatus" AS "Status" ,
+			 dSolicitacao."ReqName" AS "Solicitante" ,
+			 TO_TIMESTAMP( TO_VARCHAR(dSolicitacao."DocDate",
+			 'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(dSolicitacao."DocTime"),
+			 4,
+			 '0') ,
+			 'YYYYMMDD HH24MI') AS "Dt_Hrs_Lancamento" ,
+			 CAST ( dSolicitacao."DocDueDate" AS DATE ) AS "Dt_Vencimento" ,
+			 TO_TIMESTAMP( TO_VARCHAR(dSolicitacao."UpdateDate",
+			 'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(dSolicitacao."UpdateTS"),
+			 6,
+			 '0') ,
+			 'YYYYMMDD HH24MISS') AS "Dt_Hrs_Atualizacao" ,
+			 CAST ( dSolicitacao."ReqDate" AS DATE ) AS "Dt_Necessaria" ,
+			 fSolicitacao."ItemCode" AS "Item_Cod" ,
+			 fSolicitacao."Quantity" AS  "Quantidade" ,
+			 COALESCE ( dSolicitacao."OwnerCode",
+			 '-1' ) AS "Titular_Cod" ,
+			 COALESCE ( dSolicitacao."BPLId" ,
+			 '-1' ) AS "Filial_Cod" ,
+			 COALESCE ( fSolicitacao."OcrCode" ,
+			 'ND' ) AS "Unidade" ,
+			 COALESCE ( fSolicitacao."OcrCode2" ,
+			 'ND' ) AS "Departamento" ,
+			 dSolicitacao."Comments" AS "Comentarios" ,
+			 dSolicitacao."U_TR_TipSol" AS "Solicitacao_Tipo" ,  --Reg Regularização Normal - Compra
+			 dSolicitacao."UserSign"	AS "Solicitante_Cod" -- Conecta-se ao OHEM "userId"
+		FROM ( -- visa excluir casos onde o Pedido foi cancelado, e não tera sequência a solicitação, mas a mesma foi somente encerrada (c = concluido)
+		 SELECT
+			 OPRQ.* 
+			FROM OPRQ 
+			LEFT JOIN POR1 ON OPRQ."DocEntry" = POR1."BaseEntry" 
+			AND OPRQ."ObjType" = POR1."BaseType" 
+			LEFT JOIN OPOR ON POR1."DocEntry" = OPOR."DocEntry" 
+			WHERE OPRQ."CANCELED" = 'N' 
+			OR OPOR."CANCELED" = 'N' ) AS dSolicitacao 
+		INNER JOIN PRQ1 AS fSolicitacao ON dSolicitacao."DocEntry" = fSolicitacao."DocEntry" 
+		INNER JOIN PRQ12 AS fSolicitacaoExtendida -- Traz dados sobre taxas parametrizadas.
+		 ON dSolicitacao."DocEntry" = fSolicitacaoExtendida."DocEntry" -- Permite conectar com a OUSG que armazena os dados de CFOP
+		
+		GROUP BY dSolicitacao."DocNum" ,
+			 dSolicitacao."DocDate" ,
+			 fSolicitacao."ItemCode" ,
+			 dSolicitacao."ReqDate" ,
+			 dSolicitacao."ReqName" ,
+			 dSolicitacao."OwnerCode" ,
+			 dSolicitacao."DocStatus" ,
+			 dSolicitacao."BPLId" ,
+			 fSolicitacao."OcrCode" ,
+			 fSolicitacao."OcrCode2" ,
+			 dSolicitacao."Comments" ,
+			 fSolicitacaoExtendida."MainUsage" ,
+			 dSolicitacao."UpdateDate" ,
+			 dSolicitacao."DocEntry" ,
+			 dSolicitacao."ObjType" ,
+			 dSolicitacao."DocDueDate" ,
+			 dSolicitacao."DocTime" ,
+			 dSolicitacao."UpdateTS" ,
+			 dSolicitacao."UserSign" ,
+			 fSolicitacao."Quantity"  ,
+			 dSolicitacao."U_TR_TipSol"
+		ORDER BY dSolicitacao."DocNum" ;
+
+-- Concluir a transação
+	 COMMIT;
+-- Caso algo dê errado, desfazer todas as operações da transação, não pode ser feito após o COMMIT.
+-- ROLLBACK;

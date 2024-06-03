@@ -1,0 +1,37 @@
+-------------------------------------------------------
+--16/10/2023	FATO APONTAMENTO COMBUSTIVEL
+-------------------------------------------------------
+
+--View sobre o apontamento de combustivel
+
+BEGIN TRANSACTION ;
+	SET SCHEMA SBO_MULTIFAZENDAS ;
+		--DROP VIEW "SBO_MULTIFAZENDAS"."vw_fApontamento_Combustivel"
+		CREATE VIEW "SBO_MULTIFAZENDAS"."vw_fApontamento_Combustivel"
+			(
+			NumCod ,
+			OSCod ,
+			FazendaCod ,
+			ColaboCod ,
+			FrotaCod ,
+			OperacaoCod ,
+			Consumo_Litro ,
+			Custo ,
+			Data	
+		) AS
+			SELECT
+				"DocEntry" AS NumCod ,
+				"U_OrdemServicoIntern" AS OSCod ,
+				"U_CodFazenda" AS FazendaCod ,
+				COALESCE ( "U_CodOperado" , -1 ) AS ColaboCod ,
+				"U_CodEquipam" AS FrotaCod ,
+				COALESCE ( "U_CodOperaca" , -1 ) AS OperacaoCod ,
+				"U_Litros" AS Consumo_Litro ,
+				"U_Custo" AS Custo ,
+				CAST ( "U_Data" AS DATE ) AS Data
+				FROM
+					"@AGRI_ABST" ;
+COMMIT ;
+-- ROLLBACK ;
+
+ --SELECT * FROM "vw_fApontamento_Combustivel"

@@ -1,0 +1,167 @@
+/* Dimensão @AGRI Equipamento */
+
+SELECT
+	"Code" AS Equip_Cod ,
+	"U_DscModelo" AS Equip_Modelo ,
+	"U_DscMarca" AS Equip_Marca ,
+	"U_DscCatOper" AS Equip_Operacao ,
+	"U_AcumuHrsKm" AS Equip_AcumuHrsKm ,	
+	"U_CodigoFazenda" AS Equip_FazCod
+	FROM
+		"@AGRI_EQPM"
+
+--------------------------------------------------------
+--06/10/2023		VIEW CREATE
+--------------------------------------------------------
+
+/* Dimensão @AGRI Equipamento */
+
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dEquipamentoAgri"
+		(
+		Equip_Code ,
+		Equip_Modelo ,
+		Equip_Marca ,
+		Equip_Operacao ,
+		Equip_AcumuHrsKm ,
+		Equip_FazCod	
+	) AS
+		SELECT
+			"Code" AS Equip_Cod ,
+			"U_DscModelo" AS Equip_Modelo ,
+			"U_DscMarca" AS Equip_Marca ,
+			"U_DscCatOper" AS Equip_Operacao ,
+			"U_AcumuHrsKm" AS Equip_AcumuHrsKm ,	
+			"U_CodigoFazenda" AS Equip_FazCod
+			FROM
+				"@AGRI_EQPM" ;
+--COMMIT ;
+--ROLLBACK ;
+
+/* SELECT * FROM "vw_dEquipamentoAgri" */
+
+
+
+--------------------------------------------------------
+--09/10/2023		VIEW UPDATE
+--------------------------------------------------------
+
+/* Dimensão @AGRI Equipamento */
+
+BEGIN TRANSACTION 
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_dEquipamentoAgri"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dEquipamentoAgri"
+	(
+			Equip_Code_SK ,
+			Equip_Code_DtInicio ,
+			Equip_Code_DtFim ,
+			Equip_Modelo_Nk ,
+			Equip_Modelo_Nome ,
+			Equip_Marca ,
+			Equip_Operacao ,
+			Equip_FazCod ,
+			Equip_AcumuHrsKm	
+		) AS
+			SELECT
+				"Code" AS Equip_Code_SK ,
+				CAST ( "CreateDate" AS DATE ) AS Equip_Code_DtInicio ,
+				CAST ( "UpdateDate" AS DATE )AS Equip_Code_DtFim ,	
+				COALESCE ( "U_CodModelo" , -1 ) AS Equip_Modelo_Nk ,
+				COALESCE ( 
+					CASE 
+						WHEN "U_DscModelo" = ''
+						THEN NULL
+						ELSE "U_DscModelo"
+					END  , 'ND' ) AS Equip_Modelo_Nome ,
+				COALESCE (
+					CASE
+						WHEN "U_DscMarca"= ''
+						THEN NULL
+						ELSE "U_DscMarca"
+					END , 'ND' )AS Equip_Marca ,
+				COALESCE ( 
+					CASE
+						WHEN "U_DscCatOper" = '' 
+						THEN NULL 
+						ELSE "U_DscCatOper"
+					END , 'ND' ) AS Equip_Operacao ,
+				COALESCE (
+					CASE 
+					WHEN "U_CodigoFazenda" = '' 
+					THEN NULL
+					ELSE "U_CodigoFazenda"
+				END , 'ND' ) AS Equip_FazCod ,
+				"U_AcumuHrsKm" AS Equip_AcumuHrsKm	
+				FROM
+					"@AGRI_EQPM";
+--COMMIT ;
+--ROLLBACK ;
+/* SELECT * FROM "vw_dEquipamentoAgri" */
+	* 
+		FROM "vw_dEquipamentoAgri" 
+		WHERE Equip_Code_SK = 203913
+		
+		*/
+
+
+
+--------------------------------------------------------
+--09/10/2023		DIMENSÃO EQUIPAMENTO
+--------------------------------------------------------
+
+/* Dimensão @AGRI Equipamento */
+
+BEGIN TRANSACTION 
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_dEquipamentoAgri"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dEquipamentoAgri"
+	(
+			Equip_Code_SK ,
+			Equip_Code_DtInicio ,
+			Equip_Code_DtFim ,
+			Equip_Modelo_Nk ,
+			Equip_Modelo_Nome ,
+			Equip_Marca ,
+			Equip_Operacao ,
+			Equip_FazCod ,
+			Equip_AcumuHrsKm	
+		) AS
+			SELECT
+				"Code" AS Equip_Code_SK ,
+				CAST ( "CreateDate" AS DATE ) AS Equip_Code_DtInicio ,
+				CAST ( "UpdateDate" AS DATE )AS Equip_Code_DtFim ,	
+				COALESCE ( "U_CodModelo" , -1 ) AS Equip_Modelo_Nk ,
+				COALESCE ( 
+					CASE 
+						WHEN "U_DscModelo" = ''
+						THEN NULL
+						ELSE INITCAP ( "U_DscModelo" )
+					END  , 'ND' ) AS Equip_Modelo_Nome ,
+				COALESCE (
+					CASE
+						WHEN "U_DscMarca"= ''
+						THEN NULL
+						ELSE INITCAP ( "U_DscMarca" )
+					END , 'ND' )AS Equip_Marca ,
+				COALESCE ( 
+					CASE
+						WHEN "U_DscCatOper" = '' 
+						THEN NULL 
+						ELSE INITCAP ( "U_DscCatOper" )
+					END , 'ND' ) AS Equip_Operacao ,
+				COALESCE (
+					CASE 
+					WHEN "U_CodigoFazenda" = '' 
+					THEN NULL
+					ELSE "U_CodigoFazenda"
+				END , 'ND' ) AS Equip_FazCod ,
+				"U_AcumuHrsKm" AS Equip_AcumuHrsKm	
+				FROM
+					"@AGRI_EQPM";
+--COMMIT ;
+--ROLLBACK ;

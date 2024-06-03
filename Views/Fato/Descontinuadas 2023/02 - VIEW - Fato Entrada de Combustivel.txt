@@ -1,0 +1,65 @@
+---------------------------------
+--18/10/2023	CREATE VIEW 
+---------------------------------
+
+/* ENTRADA DE COMBUSTIVEL */
+/* DATA | QUANTIDADE | PREÇO | FAZENDA | TANQUE ( FROTA ) | COMPRADOR */
+
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_fEntradaCombustivel" ;
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_fEntradaCombustivel"
+		(
+		ItemCod ,
+		Quantidade ,
+		Preco ,
+		Desconto_Percentual,
+		Dt_Entrega ,
+		FilialCod
+	) AS
+		SELECT
+			NFE."ItemCode" AS ItemCod ,
+			NFE."Quantity" AS  Quantidade ,
+			NFE."Price" AS Preco ,
+			NFE."DiscPrcnt" AS Desconto_Percentual ,
+			NFE."ActDelDate" AS Dt_Entrega ,
+			ARMAZENS."BPLid" AS FilialCod
+			FROM
+				"PCH1" AS NFE -- Nota Fiscal de Entrada (NFE)
+			LEFT JOIN "OWHS" AS ARMAZENS
+				ON NFE."WhsCode" = ARMAZENS."WhsCode"
+			WHERE
+				NFE."ItemCode" = 'ITM00006' ;
+--COMMIT ;
+--ROLLBACK ;
+
+
+
+-- BUSCA PELO COMPRADOR
+/* Sem sucesso ainda
+
+SELECT 
+	fPedidoCompra."OwnerCode" ,
+	dColaboradores."firstName" ,
+	fNFE."ItemCode" ,
+	fPedidoCompra."ItemCode"  
+	FROM 
+		"POR1" AS fPedidoCompra
+		LEFT JOIN "OHEM" AS dColaboradores
+			ON fPedidoCompra."OwnerCode" = dColaboradores."empID"
+		INNER JOIN "OPOR" AS dPedidoCompra
+			ON dPedidoCompra."DocEntry" = fPedidoCompra."DocEntry"
+		INNER JOIN "OPCH" AS dNF -- Nota Fiscal
+			ON dNF."DocNum" = dPedidoCompra."DocNum"
+		INNER JOIN "PCH1" AS fNFE -- Nota Fiscal de Entrada
+			ON fNFE."DocEntry" = dNF."DocEntry"
+	WHERE
+		fNFE."ItemCode" = 'ITM00006'
+		
+		
+		Compra."OwnerCode"
+		RH."empID"
+		
+SELECT * FROM "PCH1"
+*/

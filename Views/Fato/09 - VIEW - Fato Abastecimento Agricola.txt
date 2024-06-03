@@ -1,0 +1,72 @@
+----------------------------------------------------------------------------------- 
+--		      					Abastecimento Agrícola
+-----------------------------------------------------------------------------------
+-- CRIADO POR: 				19/02/2024		JOHNSON WESLEY HRENECHEN	
+-- ( I ) ATUALIZADO POR: 	
+--			LOG: 	
+
+-- OBJETIVO: Dimensionalizar os dados dos abastecimentos agrícolas.
+-- DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+-- SCHEMA: SBOTRUSTAGRO
+
+-- Iniciando a transação
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+
+CREATE VIEW "SBOTRUSTAGRO"."vw_fAbastecimentoAgricola"
+	(
+	Cod_Abastecimento,
+	Cod_Fazenda ,
+	Cod_Talhao ,
+	Cod_Operacao ,
+	Dt ,
+	Hrs ,
+	Cod_Colaborador ,
+	Cod_EquipamentoAbastecedor ,
+	Cod_EquipamentoAbastecido ,
+	litros ,
+	Cod_Item
+	) AS 
+			SELECT
+				"DocEntry"							AS Cod_Abastecimento ,
+				"U_CodFazenda"						AS Cod_Fazenda , 
+				"U_CodTalhao"						AS Cod_Talhao ,
+				"U_CodOperaca"						AS Cod_Operacao ,
+				CAST ( "U_Data" AS DATE)			AS Dt ,	
+				-- Conversão do total de horas da operação para o formato de tempo HH:MM:SS (Nativamente é HHMM , integer)
+				-- Para isto é necessário padronizar a coluna a sempre ter 4 caracteres para HH:MM,e incluindo a constante :00, para formatar a coluna como TIME.
+			    CAST(
+			        CONCAT(
+			            CONCAT(
+			                LEFT(LPAD(TO_NVARCHAR("U_Hora"), 4, '0'), 2),
+			                ':'
+			            ),
+			            CONCAT(
+			                RIGHT(LPAD(TO_NVARCHAR("U_Hora"), 4, '0'), 2),
+			                ':00'
+			            )
+			        ) AS TIME
+			    ) 									AS Hrs ,			
+				"U_CodOperado" 						AS Cod_Colaborador   ,
+				"U_CodPntAbas"						AS Cod_EquipamentoAbastecedor ,
+				"U_CodEquipam"						AS Cod_EquipamentoAbastecido  ,
+				"U_Litros"							AS litros ,
+				"U_CodItem"							AS Cod_Item
+				FROM
+				"@AGRI_ABST" ;
+				/*WHERE
+				    "DocEntry" IS NULL OR
+				    "U_CodTalhao" IS NULL OR
+				    "U_CodOperaca" IS NULL OR
+				    "U_Data" IS NULL OR
+				    "U_Hora" IS NULL OR
+				    "U_CodOperado" IS NULL OR
+				    "U_CodPntAbas" IS NULL OR
+				    "U_CodEquipam" IS NULL OR
+				    "U_Litros" IS NULL OR
+				    "U_CodItem" IS NULL;*/ -- Trecho para identificação de erros
+					
+-- Concluir a transação
+ COMMIT;
+-- Caso algo dê errado, desfazer todas as operações da transação
+-- ROLLBACK;

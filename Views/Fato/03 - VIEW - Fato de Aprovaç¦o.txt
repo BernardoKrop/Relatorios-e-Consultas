@@ -1,0 +1,86 @@
+/*==================================================================================*/
+/*		      			Aprovação de documentos de Marketing						*/
+/*==================================================================================*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ CRIADO POR: 				22/04/2024		JOHNSON WESLEY HRENECHEN	
+ ( I ) ATUALIZADO POR: 		
+    LOG: 	
+
+ OBJETIVO: 	Uso para Power Bi
+ DESCRIÇÃO: Permite visualizar e conectar a tabela fato sobre as autorizações, com as devidas etapas dos documentos de marketing.
+ SCHEMA: SBOTRUSTAGRO
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*++++++++++++++++++++++++++++++++CRIAÇÃO DE VIEW++++++++++++++++++++++++++++++++*/
+
+BEGIN TRANSACTION ;
+SET SCHEMA SBOTRUSTAGRO ;
+
+ALTER VIEW "SBOTRUSTAGRO"."vw_fAprovacao"
+	(
+	"Entrada_Cod"
+	, "Objeto_Tipo"
+	, "Autor_Cod"
+	, "Estado"
+	, "Observacao"
+	, "Dt_Hrs_Criacao"
+	, "Resposta"
+	, "Dt_Hrs_Resposta"
+	, "Observacao_Autorizador"
+	, "Responsavel_Nome"
+	, "Usuario_Nome"
+	) AS 
+/*++++++++++++++++++++++++++++++++CORPO DA CONSULTA++++++++++++++++++++++++++++++++*/
+SELECT 
+	"Entrada_Cod"
+	, "Objeto_Tipo"
+	, "Autor_Cod"
+	, "Estado"
+	, "Observacao"
+	, "Dt_Hrs_Criacao"
+	, "Resposta"
+	, "Dt_Hrs_Resposta"
+	, "Observacao_Autorizador"
+	, "Responsavel_Nome"
+	, "Usuario_Nome"
+	
+	FROM (
+	SELECT
+		dAutorizacao."DocEntry"								AS "Entrada_Cod"
+		, dAutorizacao."ObjType"							AS "Objeto_Tipo"
+		, dAutorizacao."OwnerID"							AS "Autor_Cod"
+		, dAutorizacao."Status"								AS "Estado" --W = Pendente, Y = Aprovado, C = Cancelado, N = Rejeitado, A = Gerado por autorizador, P = Gerado.
+		, INITCAP ( dAutorizacao."Remarks" )				AS "Observacao"
+		, TO_TIMESTAMP(
+		  	TO_VARCHAR(dAutorizacao."CreateDate", 'YYYYMMDD') || ' ' ||
+		    LPAD(TO_VARCHAR(dAutorizacao."CreateTime"), 4, '0'),
+		  'YYYYMMDD HH24MI') AS "Dt_Hrs_Criacao"
+		, fAutorizacao."Status"								AS "Resposta"
+		, TO_TIMESTAMP(
+	  		TO_VARCHAR(fAutorizacao."UpdateDate", 'YYYYMMDD') || ' ' ||
+	   		LPAD(TO_VARCHAR(fAutorizacao."UpdateTime"), 4, '0'),
+	  	  'YYYYMMDD HH24MI') AS "Dt_Hrs_Resposta"
+		, fAutorizacao."Remarks"							AS "Observacao_Autorizador"
+		, INITCAP ( dPlanoAprovacao."Name" 	)				AS "Responsavel_Nome"
+		, INITCAP ( dUsuario."U_NAME"	   	)				AS "Usuario_Nome"
+		, CASE 
+				WHEN 
+					fAutorizacao."UpdateTime" IS NULL
+					AND fAutorizacao."Status" = 'W'	 
+					AND dAutorizacao."Status" <> 'C' THEN 1
+			ELSE 0
+		END AS "Flag_FalsoPendente" -- Útil para eliminar residuos indesejados da consulta, quando for usar em PBI, ou ainda no SQL.
+		
+		FROM 
+			OWDD			AS dAutorizacao
+		INNER JOIN WDD1		AS fAutorizacao
+			ON	dAutorizacao."WddCode" 	= fAutorizacao."WddCode"
+		LEFT JOIN OWST		AS dPlanoAprovacao
+			ON fAutorizacao."StepCode" 	= dPlanoAprovacao."WstCode"
+		LEFT JOIN OUSR		AS dUsuario
+			ON fAutorizacao."UserID"	= dUsuario."USERID"	
+		WHERE
+			dAutorizacao."Status" <> 'C'
+	)AS vw_fAprovacao
+	WHERE
+		vw_fAprovacao."Flag_FalsoPendente" = 0

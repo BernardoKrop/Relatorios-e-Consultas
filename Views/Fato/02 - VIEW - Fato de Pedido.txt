@@ -1,0 +1,118 @@
+/*==================================================================================*/
+/*		      					Fato de Pedido									*/
+/*==================================================================================*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ CRIADO POR: 				03/04/2024		JOHNSON WESLEY HRENECHEN	
+ ( I ) ATUALIZADO POR: 		23/04/2024		JOHNSON WESLEY HRENECHEN
+		LOG: Acrescimo da coluna de rateio, Dt_Hrs, e chaves primárias para outras conexões.
+ ( II ) ATUALIZADO POR:		30/04/2024		JOHNSON WESLEY HRENECHEN
+		LOG: Com base na melhoria desenvolvida pelo Especialista SAP THIAGO SILVA, foi adicionado campo do tipo de pedido.
+
+ OBJETIVO: Utilizar para desenvolvimento de relatório de fluxo de notas.
+ DESCRIÇÃO: Identifica os pedidos não canceladas do sistema.
+ SCHEMA: SBOTRUSTAGRO
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*==================================PEDIDO==================================*/	
+
+-- Iniciando a transação
+
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+
+ALTER VIEW "SBOTRUSTAGRO"."vw_fPedido"
+	(
+	"Entrada_Cod" 	
+	, "Objeto_Tipo"		
+	, "Interno_Cod"
+	, "Utilidade_Cod"
+	, "Status" 
+	, "Dt_Hrs_Lancamento" 
+	, "Dt_Vencimento"
+	, "Dt_Hrs_Atualizacao"
+	, "Dt_Emissao"
+	, "Fornecedor_Cod"
+	, "Item_Cod"
+	, "Volume Total"
+	, "Preço"
+	, "Valor_DescontoRateio"
+	, "Titular"
+	, "Filial"
+	, "Unidade"
+	, "Departamento" 
+	, "Comentarios"
+	, "BaseEntrada_Cod"
+	, "Tipo_Pedido"
+	) AS 
+			SELECT
+				dPedido."DocEntry"									AS "Entrada_Cod"
+				, dPedido."ObjType"									AS "Objeto_Tipo"
+				, dPedido."DocNum" 									AS "Interno_Cod" 				
+				, COALESCE ( fPedidoExtendida."MainUsage" , '-1' )	AS "Utilidade_Cod" --Flag interna para indicar CFOP
+				, dPedido."DocStatus"								AS "Status"
+				, TO_TIMESTAMP(
+		  			TO_VARCHAR(dPedido."DocDate", 'YYYYMMDD') || ' ' ||
+		    		LPAD(TO_VARCHAR(dPedido."DocTime"), 4, '0') ,
+		    	  'YYYYMMDD HH24MI') 								AS "Dt_Hrs_Lancamento"
+		    	, CAST 	( dPedido."DocDueDate" AS DATE )			AS "Dt_Vencimento" 
+		    	, TO_TIMESTAMP(
+		  			TO_VARCHAR(dPedido."UpdateDate", 'YYYYMMDD') || ' ' ||
+		    		LPAD(TO_VARCHAR(dPedido."UpdateTS"), 6, '0') ,
+		    	  'YYYYMMDD HH24MISS') 								AS "Dt_Hrs_Atualizacao"	
+		    	, CAST 	( dPedido."TaxDate" AS DATE )				AS "Dt_Emissao"   			
+				, dPedido."CardCode"								AS "Fornecedor_Cod" 				
+				, fPedido."ItemCode" 								AS "Item_Cod"
+				, SUM ( fPedido."Quantity" )						AS "Volume_Total"
+				, fPedido."Price" 									AS "Preco"		
+				, ( ( fPedido."LineTotal" / ( SUM( fPedido."LineTotal" ) OVER (PARTITION BY dPedido."DocNum" ) ) ) *
+					COALESCE ( dPedido."DiscSum" , 0 ) ) 			AS "Valor_DescontoRateio" --Desconto					
+				, dPedido."OwnerCode"								AS "Titular"					
+				, dPedido."BPLId"									AS "Filial"						
+				, fPedido."OcrCode"                        			AS "Unidade"	
+				, fPedido."OcrCode2"                       			AS "Departamento"            					
+				, dPedido."Comments"								AS "Comentarios"
+				, fPedido."BaseEntry"								AS "BaseEntrada_Cod" -- Conecta-se ao DocNum da solicitação.
+				, dPedido."U_TR_TipSol"								AS "Tipo_Pedido" --Reg Regularização Normal - Compra
+						
+				FROM
+					OPOR										AS dPedido
+					INNER JOIN POR1 							AS fPedido
+						ON 	dPedido."DocEntry" = fPedido."DocEntry"
+					INNER JOIN POR12							AS fPedidoExtendida
+						ON 	dPedido."DocEntry" = fPedidoExtendida."DocEntry"	
+				WHERE
+					dPedido."CANCELED" = 'N'	--N é não e Y é sim (foi cancelado)
+				GROUP BY 
+					dPedido."DocNum" 	
+					, fPedido."LineTotal"
+					, dPedido."DiscSum"
+					, dPedido."DiscSum"
+					, fPedido."Price"
+					, dPedido."TaxDate"	
+					, dPedido."DocDate" 		
+					, dPedido."ReqDate" 	
+					, dPedido."ObjType"		
+					, dPedido."OwnerCode" 	
+					, dPedido."DocStatus" 	
+					, dPedido."BPLId"		
+					, fPedido."OcrCode"		
+					, fPedido."OcrCode2"
+					, dPedido."Comments"
+					, fPedidoExtendida."MainUsage"	
+					, fPedido."BaseEntry"
+					, dPedido."DocEntry"
+					, dPedido."ReqName"
+					, dPedido."CardCode"
+					, dPedido."UpdateTS"
+					, dPedido."UpdateDate"
+					, dPedido."DocTime"
+					, dPedido."DocDueDate"
+					, fPedido."ItemCode"
+					, dPedido."U_TR_TipSol"	
+				ORDER BY
+					dPedido."DocNum" DESC ;
+
+-- Concluir a transação
+	 COMMIT;
+-- Caso algo dê errado, desfazer todas as operações da transação, não pode ser feito após o COMMIT.
+-- ROLLBACK;

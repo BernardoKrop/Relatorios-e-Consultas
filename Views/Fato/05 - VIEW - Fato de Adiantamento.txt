@@ -1,0 +1,115 @@
+/*==================================================================================*/
+/*		      			Fato de Adiantamento							*/
+/*==================================================================================*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ CRIADO POR: 				23/04/2024		JOHNSON WESLEY HRENECHEN	
+ ( I ) ATUALIZADO POR: 		
+    LOG: 	
+
+ OBJETIVO: 	Uso para Power Bi
+ DESCRIÇÃO: Permite visualizar e conectar a tabela fato sobre as autorizações, com as devidas etapas dos documentos de marketing.
+ SCHEMA: SBOTRUSTAGRO
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*++++++++++++++++++++++++++++++++CRIAÇÃO DE VIEW++++++++++++++++++++++++++++++++*/
+
+BEGIN TRANSACTION ;
+SET SCHEMA SBOTRUSTAGRO ;
+
+ALTER VIEW "SBOTRUSTAGRO"."vw_fAdiantamento"
+	(
+		"Entrada_Cod"
+		, "Objeto_Tipo"
+		, "Interno_Cod"
+		, "Status"
+		, "Utilidade_Cod" 
+		, "BaseEntrada_Cod"
+		, "BaseObjeto_Tipo"
+		, "Titular_Cod"
+		, "Dt_Emissao"   
+		, "Dt_Vencimento"
+		, "Dt_Hrs_Lancamento"	
+		, "Dt_Hrs_Atualizacao"	      
+		, "Fornecedor_Cod"
+		, "Item_Cod"
+		, "Volume_Total"
+		, "Preco"
+		, "Valor_DescontoRateio"
+		, "Filial"
+		, "Unidade"
+		, "Departamento"
+		, "Comentarios"
+	) AS 
+/*++++++++++++++++++++++++++++++++CORPO DA CONSULTA++++++++++++++++++++++++++++++++*/
+	SELECT 
+		dAdiantamento."DocEntry"												AS "Entrada_Cod"
+		, fAdiantamento."ObjType"												AS "Objeto_Tipo"
+		, dAdiantamento."DocNum"												AS "Interno_Cod"
+		, dAdiantamento."DocStatus"												AS "Status"
+		, COALESCE ( fAdiantamentoExtendido."MainUsage", '-1' )					AS "Utilidade_Cod" --Flag interna para indicar CFOP 
+		, COALESCE ( fAdiantamento."BaseEntry" , '-1' )							AS "BaseEntrada_Cod"
+		, fAdiantamento."BaseType"												AS "BaseObjeto_Tipo"
+		, COALESCE ( dAdiantamento."OwnerCode", '-1' )							AS "Titular_Cod"
+		, CAST 	( dAdiantamento."TaxDate" AS DATE )								AS "Dt_Emissao"   
+		, CAST 	( dAdiantamento."DocDueDate" AS DATE )							AS "Dt_Vencimento"
+		, TO_TIMESTAMP(
+	  		TO_VARCHAR(dAdiantamento."DocDate", 'YYYYMMDD') || ' ' ||
+	    	LPAD(TO_VARCHAR(dAdiantamento."DocTime"), 4, '0') ,
+	      'YYYYMMDD HH24MI') 													AS "Dt_Hrs_Lancamento"	
+	   	, TO_TIMESTAMP(
+			TO_VARCHAR(dAdiantamento."UpdateDate", 'YYYYMMDD') || ' ' ||
+	   		LPAD(TO_VARCHAR(dAdiantamento."UpdateTS"), 6, '0') ,
+	   	  'YYYYMMDD HH24MISS') 													AS "Dt_Hrs_Atualizacao"	      
+		, dAdiantamento."CardCode"												AS "Fornecedor_Cod"
+		, fAdiantamento."ItemCode"												AS "Item_Cod"
+		, fAdiantamento."Quantity"												AS "Volume_Total"
+		, fAdiantamento."Price"													AS "Preco"
+	 	, ( ( fAdiantamento."LineTotal" / CASE
+	 									 	WHEN ( SUM( fAdiantamento."LineTotal" ) OVER (PARTITION BY dAdiantamento."DocNum" ) ) = 0 
+	 									 	THEN null
+	 									 	ELSE ( SUM( fAdiantamento."LineTotal" ) OVER (PARTITION BY dAdiantamento."DocNum" ) ) 
+	 									 END ) *
+						COALESCE ( dAdiantamento."DiscSum" , 0 ) ) 				AS "Valor_DescontoRateio"
+		, dAdiantamento."BPLId"													AS "Filial"
+		, fAdiantamento."OcrCode"												AS "Unidade"
+		, fAdiantamento."OcrCode2"												AS "Departamento"
+		, dAdiantamento."Comments"												AS "Comentarios"
+
+		FROM ODPO										AS dAdiantamento
+		INNER JOIN 	DPO1								AS fAdiantamento
+			ON fAdiantamento."DocEntry"	=	dAdiantamento."DocEntry"
+		LEFT JOIN 	DPO12								AS fAdiantamentoExtendido -- Traz dados sobre 
+			ON dAdiantamento."DocEntry" =	fAdiantamentoExtendido."DocEntry"
+		-- Permite conectar com a OUSG que armazena os dados de CFOP
+		
+		WHERE
+			dAdiantamento."CANCELED" 	<> 'C'
+		GROUP BY
+			dAdiantamento."DocEntry"
+			, fAdiantamento."BaseEntry"
+			, dAdiantamento."DocNum"
+			, fAdiantamento."BaseType"
+			, dAdiantamento."DocStatus"
+			, fAdiantamento."ItemCode"
+			, fAdiantamento."ObjType"
+			, fAdiantamento."Quantity"
+			, fAdiantamento."Price"
+			, fAdiantamento."LineTotal"
+			, dAdiantamento."DiscSum"
+			, dAdiantamento."OwnerCode"
+			, dAdiantamento."UpdateTS"
+			, dAdiantamento."UpdateDate"
+			, dAdiantamento."DocTime"
+			, dAdiantamento."TaxDate"
+			, dAdiantamento."DocDueDate"
+			, dAdiantamento."DocDate"
+			, dAdiantamento."CardCode"
+			, dAdiantamento."BPLId"
+			, fAdiantamento."OcrCode"
+			, fAdiantamento."OcrCode2"
+			, dAdiantamento."Comments"
+			, fAdiantamentoExtendido."MainUsage"
+		
+		ORDER BY
+			dAdiantamento."DocNum" DESC
+		

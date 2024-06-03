@@ -1,0 +1,148 @@
+/* Dimensão Colaboradores */
+
+SELECT
+	"empID" AS Colab_Cod ,
+	"firstName" AS Colab_NomeIni ,
+	"middleName" AS Colab_NomeMeio ,
+	"lastName" AS Colab_NomeFim ,
+	"sex" AS Colab_Sexo ,
+	"jobTitle" AS Colab_Funcao ,
+	"CostCenter" AS Colab_CentroCusto ,
+	"manager" AS Colab_GerentCod ,
+	"startDate" AS Colab_DtIni ,
+	"BPLId" AS Colab_FilalCod ,
+	"dept" AS Colab_DepartCod
+	FROM
+		OHEM
+
+--------------------------------------------------------
+--06/10/2023		VIEW CREATE
+--------------------------------------------------------
+/* Dimensão Colaboradores */
+
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dColaboradores"
+		(
+		Colab_Cod ,
+		Colab_NomeIni ,
+		Colab_NomeMeio ,
+		Colab_NomeFim ,
+		Colab_Sexo ,
+		Colab_Funcao ,
+		Colab_CentroCusto ,
+		Colab_GerentCod ,
+		Colab_DtIni ,
+		Colab_FilalCod ,
+		Colab_DepartCod	
+	) AS
+		SELECT
+			"empID" AS Colab_Cod ,
+			"firstName"  AS Colab_NomeIni ,
+			"middleName" AS Colab_NomeMeio ,
+			"lastName" AS Colab_NomeFim ,
+			"sex" AS Colab_Sexo ,
+			"jobTitle" AS Colab_Funcao ,
+			"CostCenter" AS Colab_CentroCusto ,
+			"manager" AS Colab_GerentCod ,
+			"startDate" AS Colab_DtIni ,
+			"BPLId" AS Colab_FilalCod ,
+			"dept" AS Colab_DepartCod
+			FROM
+				OHEM ;
+COMMIT ;
+--ROLLBACK ;
+
+
+/* SELECT * FROM "vw_dColaboradores" ORDER BY "COLAB_COD" */
+
+--------------------------------------------------------
+--09/10/2023		VIEW UPDATE
+--------------------------------------------------------
+
+/* Dimensão Colaboradores */
+
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_dColaboradores"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dColaboradores"
+		(
+		Colab_Cod ,
+		Colab_NomeIni ,
+		Colab_NomeMeio ,
+		Colab_NomeFim ,
+		Colab_Sexo ,
+		Colab_Funcao ,
+		Colab_CentroCusto ,
+		Colab_GerentCod ,
+		Colab_DtIni ,
+		Colab_FilalCod ,
+		Colab_DepartCod	
+	) AS
+		SELECT
+			"empID" AS Colab_Cod ,
+			"firstName"  AS Colab_NomeIni ,
+			"middleName" AS Colab_NomeMeio ,
+			"lastName" AS Colab_NomeFim ,
+			COALESCE ( "sex" , 'ND' ) AS Colab_Sexo ,
+			COALESCE ( "jobTitle" , 'ND' ) AS Colab_Funcao ,
+			COALESCE ( "CostCenter" , 'ND' ) AS Colab_CentroCusto ,
+			COALESCE ( "manager" , -1 )AS Colab_GerentCod ,
+			CAST ( "startDate" AS DATE ) AS Colab_DtIni ,
+			COALESCE ( "BPLId" , -1 ) AS Colab_FilalCod ,
+			COALESCE ( "dept" , 0 ) AS Colab_DepartCod
+			FROM
+				OHEM ;
+--COMMIT ;
+--ROLLBACK ;
+
+
+/* SELECT * FROM "vw_dColaboradores" ORDER BY "COLAB_COD" */
+
+
+
+--------------------------------------------------------
+--30/10/2023		DIMENSÃO COLABORADORES
+--------------------------------------------------------
+
+/* Dimensão Colaboradores */
+
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_dColaboradores"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dColaboradores"
+		(
+		Colab_Cod ,
+		Colab_NomeIni ,
+		Colab_NomeMeio ,
+		Colab_NomeFim ,
+		Colab_Sexo ,
+		Colab_Funcao ,
+		Colab_CentroCusto ,
+		Colab_GerentCod ,
+		Colab_DtIni ,
+		Colab_FilalCod ,
+		Colab_DepartCod	
+	) AS
+		SELECT
+			"empID" AS Colab_Cod ,
+			INITCAP ( "firstName" )  AS Colab_NomeIni ,
+			INITCAP ( "middleName" ) AS Colab_NomeMeio ,
+			INITCAP ( "lastName" ) AS Colab_NomeFim ,
+			COALESCE ( "sex" , 'ND' ) AS Colab_Sexo ,
+			COALESCE ( INITCAP ( "jobTitle" ) , 'ND' ) AS Colab_Funcao ,
+			COALESCE ( "CostCenter" , 'ND' ) AS Colab_CentroCusto ,
+			COALESCE ( "manager" , -1 )AS Colab_GerentCod ,
+			CAST ( "startDate" AS DATE ) AS Colab_DtIni ,
+			COALESCE ( "BPLId" , -1 ) AS Colab_FilalCod ,
+			COALESCE ( "dept" , 0 ) AS Colab_DepartCod
+			FROM
+				OHEM ;
+--COMMIT ;
+--ROLLBACK ;
+
+
+/* SELECT * FROM "vw_dColaboradores" ORDER BY "COLAB_COD" */

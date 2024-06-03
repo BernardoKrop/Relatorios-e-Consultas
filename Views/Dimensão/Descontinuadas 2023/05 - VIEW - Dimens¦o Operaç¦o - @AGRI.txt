@@ -1,0 +1,58 @@
+/* Dimensão @AGRI Operação */
+
+SELECT
+	"Code" AS OP_Cod ,
+	"Name" AS OP_Nome ,
+	"U_DscUnMed" AS OP_UndMedida
+	FROM
+		"@AGRI_EVAG"
+
+--------------------------------------------------------
+			VIEW CREATE
+-------------------------------------------------------
+
+/* Dimensão @AGRI Operação */
+
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dOperacaoAgri"
+		(
+		OP_Code ,
+		OP_Nome ,
+		OP_UndMedida	
+	) AS
+		SELECT
+			"Code" AS OP_Cod ,
+			"Name" AS OP_Nome ,
+			"U_DscUnMed" AS OP_UndMedida
+			FROM
+				"@AGRI_EVAG" ;
+--COMMIT ;
+--ROLLBACK ;
+
+/* SELECT * FROM "vw_dOperacaoAgri" */
+
+--------------------------------------------------------
+--30/10/2023		DIMENSÃO OPERAÇÕES AGRICOLAS
+--------------------------------------------------------
+/* Dimensão @AGRI Operação */
+
+BEGIN TRANSACTION ;
+
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_dOperacaoAgri"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_dOperacaoAgri"
+		(
+		OP_Code ,
+		OP_Nome ,
+		OP_UndMedida	
+	) AS
+		SELECT
+			"Code" AS OP_Cod ,
+			INITCAP ( "Name" ) AS OP_Nome ,
+			INITCAP ( "U_DscUnMed" ) AS OP_UndMedida
+			FROM
+				"@AGRI_EVAG" ;
+COMMIT ;
+--ROLLBACK ;

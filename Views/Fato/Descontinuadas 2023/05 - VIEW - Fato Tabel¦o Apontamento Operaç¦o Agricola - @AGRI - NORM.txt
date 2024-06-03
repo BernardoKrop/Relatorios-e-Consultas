@@ -1,0 +1,338 @@
+------------------------------------
+-- CREATE VIEW
+------------------------------------
+/* TABELÃO APONTAMENTO AGRICOLA */
+BEGIN TRANSACTION 
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_fTabelaoApontamento_Agricola"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_fTabelaoApontamento_Agricola"
+		(
+			AP_NumCod ,
+	 		AP_OSCod ,
+			AP_FazCod ,
+			AP_OPCod ,
+			AP_Turno ,
+			AP_Dt_Ini ,
+			AP_Dt_Fim ,
+	 		AP_Hr_Ini ,
+	 		AP_Hr_Fim ,
+	 		AP_Hr_Total ,
+	 		AP_Status ,
+			Talhao_Cod ,
+       	  	T_Area_Util ,
+       	  	Equip_Cod ,
+			Equip_Hori_Total ,
+			Area_Tratada ,
+			Colab_Cod ,
+			Colab_Hr_Total ,
+			Mot_Dsc ,
+			Mot_Hr_Total
+		) AS
+			SELECT
+				A."DocEntry" AS AP_NumCod ,
+		 		A."U_OrdemServicoIntern" AS AP_OSCod ,
+				 A."U_CodFazenda" AS AP_FazCod ,
+				 A."U_CodOperaca" AS AP_OPCod ,
+				 --A."U_CodEquipe" AS AP_EquipeCod ,
+				 A."U_DscTurno" AS AP_Turno ,
+				 CAST ( A."U_Data" AS DATE ) AS AP_Dt_Ini ,
+				 CAST ( A."U_DataFinal" AS DATE ) AS AP_Dt_Fim ,
+		 		 A."U_HrInicial" AS AP_Hr_Ini ,
+		 		 A."U_HrFinal" AS AP_Hr_Fim ,
+		 		 A."U_TotalHoras" AS AP_Hr_Total ,
+		 		CASE 
+		 			WHEN A."U_Status" = 'A' 
+					THEN 'Aberto' 
+					WHEN A."U_Status" = 'E' 
+					THEN 'Encerrado'
+					WHEN A."U_Status" = 'C' 
+					THEN 'Cancelado' 
+				END AS AP_Status ,
+				COALESCE ( B."U_CodTalhao" , 'ND' ) AS Talhao_Cod ,
+	       	  	COALESCE ( B."U_Area" , 0 ) AS T_Area_Util ,
+	        	--COALESCE ( B."U_AreaRealizadaMaquina" , 0 ) AS T_Area_realizada , -- Pode ter risco do C."U_AreaTrabalhada" estar diferente.
+				C."U_CodEquipam" AS Equip_Cod ,
+				--CAST ( C."U_Data" AS DATE ) AS Equip_Dt ,
+				--C."U_HoraInicial" AS Equip_Hrs_Ini ,
+				--C."U_HoraFinal" AS Equip_Hrs_Fim ,
+				--C."U_HorimetIni" AS Equip_Hori_Ini ,
+				--C."U_HorimetFin" AS Equip_Hori_Fim ,	
+				C."U_Total" AS Equip_Hori_Total ,
+				C."U_AreaTrabalhada" AS Area_Tratada , --Granular da Area total
+				COALESCE ( D."U_CodColabor" , -1 ) AS Colab_Cod , -- Colaborador = Mão de Obra Conectado com o SAP
+				--CAST ( D."U_Data"  AS DATE ) AS Colab_Data , -- A vir da Dimensão
+				--D."U_HoraInicial" AS Colab_Hr_Ini ,
+				--D."U_HoraFinal" AS Colab_Hr_Fim  ,
+				D."U_HrsTrabalh" AS Colab_Hr_Total ,
+				--COALESCE ( D."U_CodEquipamento" , 0 )AS Colab_Frota 
+				--COALESCE ( E."U_CodOperador" , -1 )AS Mot_Operador_Cod , --Tem valores equivocados
+				--COALESCE ( E."U_CodEquipamento" , -1 )AS Mot_Frota_Cod 
+				E."U_DscMotivoParada" AS Mot_Dsc ,
+				--COALESCE ( E."U_TipoMotivoParada" , 'ND' )AS Tipo_Parada , -- Planejado ( P )
+				--CAST ( E."U_Data" AS DATE ) AS Mot_Dt ,
+				--COALESCE ( E."U_HoraInicial" , 0 ) AS Mot_Hr_Ini ,
+				--COALESCE ( E."U_HoraFinal" , 0 ) AS Mot_Hr_Fim ,
+				COALESCE ( E."U_HorasParadas" , 0 ) AS Mot_Hr_Total
+					FROM "@AGRI_AOPA" AS A 
+					LEFT JOIN "@AGRI_AOPT" AS B
+						ON  A."DocEntry" = B."DocEntry"
+					LEFT JOIN "@AGRI_AOPE" AS C
+						ON A."DocEntry" = C."DocEntry"
+					LEFT JOIN "@AGRI_AOPC" AS D
+						ON A."DocEntry" = D."DocEntry"
+					LEFT JOIN "@AGRI_AOPM" AS E
+						ON A."DocEntry" = E."DocEntry"
+					WHERE
+						A."U_Status" <> 'C'
+						-- AND D."U_CodColabor" <> E."U_CodOperador"
+						--AND E."U_CodOperador" IS NULL
+						--AND E."U_DscMotivoParada" IS NOT NULL
+					GROUP BY
+						A."DocEntry"  ,
+				 		A."U_OrdemServicoIntern" ,
+						A."U_CodFazenda"  ,
+						A."U_CodOperaca",
+						--A."U_CodEquipe" AS AP_EquipeCod ,
+						A."U_DscTurno"  ,
+						CAST ( A."U_Data" AS DATE )  ,
+						CAST ( A."U_DataFinal" AS DATE )  ,
+				 		A."U_HrInicial"  ,
+				 		A."U_HrFinal" ,
+				 		A."U_TotalHoras"  ,
+				 		CASE 
+				 			WHEN A."U_Status" = 'A' 
+							THEN 'Aberto' 
+							WHEN A."U_Status" = 'E' 
+							THEN 'Encerrado'
+							WHEN A."U_Status" = 'C' 
+							THEN 'Cancelado' 
+						END  ,
+						COALESCE ( B."U_CodTalhao" , 'ND' ) ,
+			       	  	COALESCE ( B."U_Area" , 0 ) ,
+			        	COALESCE ( B."U_AreaRealizadaMaquina" , 0 )  ,
+						C."U_CodEquipam" ,
+						--C."U_HorimetIni",
+						--C."U_HorimetFin" ,	
+						C."U_Total" ,
+						C."U_AreaTrabalhada" ,
+						COALESCE ( D."U_CodColabor" , -1 ),
+						--D."U_HoraInicial" ,
+						--D."U_HoraFinal"  ,
+						D."U_HrsTrabalh"  ,
+						--E."U_CodOperador" ,
+						E."U_DscMotivoParada" ,
+						COALESCE ( E."U_HorasParadas" , 0 )
+						--COALESCE ( E."U_CodEquipamento" , -1 )
+					WITH READ ONLY ;
+
+COMMIT ;
+--ROLBACK ;
+
+/* SELECT * FROM "vw_fTabelaoApontamento_Agricola" */
+
+
+------------------------------------
+--19/10/2023	UPDATE VIEW
+------------------------------------
+/* TABELÃO APONTAMENTO AGRICOLA */
+BEGIN TRANSACTION ;
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_fTabelaoApontamento_Agricola"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_fTabelaoApontamento_Agricola"
+		(
+			AP_NumCod ,
+	 		AP_OSCod ,
+			AP_FazCod ,
+			AP_OPCod ,
+			AP_Turno ,
+			AP_Dt_Ini ,
+			AP_Dt_Fim ,
+	 		AP_Hr_Ini ,
+	 		AP_Hr_Fim ,
+	 		AP_Hr_Total ,
+	 		AP_Status ,
+			Talhao_Cod ,
+       	  	T_Area_Util ,
+       	  	Equip_Cod ,
+			Equip_Hori_Total ,
+			Area_Tratada ,
+			Colab_Cod ,
+			Colab_Hr_Total ,
+			Mot_Dsc ,
+			Mot_Hr_Total
+		) AS
+			SELECT
+				A."DocEntry" AS AP_NumCod ,
+		 		A."U_OrdemServicoIntern" AS AP_OSCod ,
+				 A."U_CodFazenda" AS AP_FazCod ,
+				 A."U_CodOperaca" AS AP_OPCod ,
+				 A."U_DscTurno" AS AP_Turno ,
+				 CAST ( A."U_Data" AS DATE ) AS AP_Dt_Ini ,
+				 CAST ( A."U_DataFinal" AS DATE ) AS AP_Dt_Fim ,
+		 		 A."U_HrInicial" AS AP_Hr_Ini ,
+		 		 A."U_HrFinal" AS AP_Hr_Fim ,
+		 		 A."U_TotalHoras" AS AP_Hr_Total ,
+		 		CASE 
+		 			WHEN A."U_Status" = 'A' 
+					THEN 'Aberto' 
+					WHEN A."U_Status" = 'E' 
+					THEN 'Encerrado'
+					WHEN A."U_Status" = 'C' 
+					THEN 'Cancelado' 
+				END AS AP_Status ,
+				COALESCE ( B."U_CodTalhao" , 'ND' ) AS Talhao_Cod ,
+	       	  	COALESCE ( B."U_Area" , 0 ) AS T_Area_Util ,
+				C."U_CodEquipam" AS Equip_Cod ,	
+				C."U_Total" AS Equip_Hori_Total ,
+				C."U_AreaTrabalhada" AS Area_Tratada , --Granular da Area total
+				COALESCE ( D."U_CodColabor" , -1 ) AS Colab_Cod , -- Colaborador = Mão de Obra Conectado com o SAP
+				D."U_HrsTrabalh" AS Colab_Hr_Total ,
+				E."U_DscMotivoParada" AS Mot_Dsc ,
+				E."U_HorasParadas" AS Mot_Hr_Total
+					FROM "@AGRI_AOPA" AS A 
+					LEFT JOIN "@AGRI_AOPT" AS B
+						ON  A."DocEntry" = B."DocEntry"
+					LEFT JOIN "@AGRI_AOPE" AS C
+						ON A."DocEntry" = C."DocEntry"
+					LEFT JOIN "@AGRI_AOPC" AS D
+						ON A."DocEntry" = D."DocEntry"
+					LEFT JOIN "@AGRI_AOPM" AS E
+						ON A."DocEntry" = E."DocEntry"
+					WHERE
+						A."U_Status" <> 'C'
+					GROUP BY
+						A."DocEntry"  ,
+				 		A."U_OrdemServicoIntern" ,
+						A."U_CodFazenda"  ,
+						A."U_CodOperaca",
+						A."U_DscTurno"  ,
+						CAST ( A."U_Data" AS DATE )  ,
+						CAST ( A."U_DataFinal" AS DATE )  ,
+				 		A."U_HrInicial"  ,
+				 		A."U_HrFinal" ,
+				 		A."U_TotalHoras"  ,
+				 		CASE 
+				 			WHEN A."U_Status" = 'A' 
+							THEN 'Aberto' 
+							WHEN A."U_Status" = 'E' 
+							THEN 'Encerrado'
+							WHEN A."U_Status" = 'C' 
+							THEN 'Cancelado' 
+						END  ,
+						COALESCE ( B."U_CodTalhao" , 'ND' ) ,
+			       	  	COALESCE ( B."U_Area" , 0 ) ,
+			        	COALESCE ( B."U_AreaRealizadaMaquina" , 0 )  ,
+						C."U_CodEquipam" ,	
+						C."U_Total" ,
+						C."U_AreaTrabalhada" ,
+						COALESCE ( D."U_CodColabor" , -1 ),
+						D."U_HrsTrabalh"  ,
+						E."U_DscMotivoParada" ,
+						E."U_HorasParadas"
+					WITH READ ONLY ;
+
+COMMIT ;
+--ROLBACK ;
+
+/* SELECT * FROM "vw_fTabelaoApontamento_Agricola" */
+
+---------------------------------------------------
+--30/10/2023	FATO APONTAMENTO AGRICOLA
+---------------------------------------------------
+/* TABELÃO APONTAMENTO AGRICOLA */
+BEGIN TRANSACTION ;
+SET SCHEMA SBO_MULTIFAZENDAS;
+	--DROP VIEW "SBO_MULTIFAZENDAS"."vw_fTabelaoApontamento_Agricola"
+	CREATE VIEW "SBO_MULTIFAZENDAS"."vw_fTabelaoApontamento_Agricola"
+		(
+			AP_NumCod ,
+	 		AP_OSCod ,
+			AP_FazCod ,
+			AP_OPCod ,
+			AP_Turno ,
+			AP_Dt_Ini ,
+			AP_Dt_Fim ,
+	 		AP_Hr_Ini ,
+	 		AP_Hr_Fim ,
+	 		AP_Hr_Total ,
+	 		AP_Status ,
+			Talhao_Cod ,
+       	  	Equip_Cod ,
+			Equip_Hori_Total ,
+			Area_Tratada ,
+			Colab_Cod ,
+			Colab_Hr_Total ,
+			Mot_Dsc ,
+			Mot_Hr_Total
+		) AS
+			SELECT
+				A."DocEntry" AS AP_NumCod ,
+		 		A."U_OrdemServicoIntern" AS AP_OSCod ,
+				A."U_CodFazenda" AS AP_FazCod ,
+				A."U_CodOperaca" AS AP_OPCod ,
+				INITCAP ( A."U_DscTurno" ) AS AP_Turno ,
+				CAST ( A."U_Data" AS DATE ) AS AP_Dt_Ini ,
+				CAST ( A."U_DataFinal" AS DATE ) AS AP_Dt_Fim ,
+		 		A."U_HrInicial" AS AP_Hr_Ini ,
+		 		A."U_HrFinal" AS AP_Hr_Fim ,
+		 		A."U_TotalHoras" AS AP_Hr_Total ,
+		 		CASE 
+		 			WHEN A."U_Status" = 'A' 
+					THEN 'Aberto' 
+					WHEN A."U_Status" = 'E' 
+					THEN 'Encerrado'
+					WHEN A."U_Status" = 'C' 
+					THEN 'Cancelado' 
+				END AS AP_Status ,
+				COALESCE ( B."U_CodTalhao" , 'ND' ) AS Talhao_Cod ,
+				C."U_CodEquipam" AS Equip_Cod ,	
+				C."U_Total" AS Equip_Hori_Total ,
+				C."U_AreaTrabalhada" AS Area_Tratada , --Granular da Area total
+				COALESCE ( D."U_CodColabor" , -1 ) AS Colab_Cod , -- Colaborador = Mão de Obra Conectado com o SAP
+				D."U_HrsTrabalh" AS Colab_Hr_Total ,
+				COALESCE ( INITCAP ( E."U_DscMotivoParada" ) , 'ND' ) AS Mot_Dsc ,
+				E."U_HorasParadas" AS Mot_Hr_Total
+					FROM "@AGRI_AOPA" AS A 
+					LEFT JOIN "@AGRI_AOPT" AS B
+						ON  A."DocEntry" = B."DocEntry"
+					LEFT JOIN "@AGRI_AOPE" AS C
+						ON A."DocEntry" = C."DocEntry"
+					LEFT JOIN "@AGRI_AOPC" AS D
+						ON A."DocEntry" = D."DocEntry"
+					LEFT JOIN "@AGRI_AOPM" AS E
+						ON A."DocEntry" = E."DocEntry"
+					WHERE
+						A."U_Status" <> 'C'
+					GROUP BY
+						A."DocEntry"  ,
+				 		A."U_OrdemServicoIntern" ,
+						A."U_CodFazenda"  ,
+						A."U_CodOperaca",
+						A."U_DscTurno"  ,
+						CAST ( A."U_Data" AS DATE )  ,
+						CAST ( A."U_DataFinal" AS DATE )  ,
+				 		A."U_HrInicial"  ,
+				 		A."U_HrFinal" ,
+				 		A."U_TotalHoras"  ,
+				 		CASE 
+				 			WHEN A."U_Status" = 'A' 
+							THEN 'Aberto' 
+							WHEN A."U_Status" = 'E' 
+							THEN 'Encerrado'
+							WHEN A."U_Status" = 'C' 
+							THEN 'Cancelado' 
+						END  ,
+						COALESCE ( B."U_CodTalhao" , 'ND' ) ,
+						C."U_CodEquipam" ,	
+						C."U_Total" ,
+						C."U_AreaTrabalhada" ,
+						COALESCE ( D."U_CodColabor" , -1 ),
+						D."U_HrsTrabalh"  ,
+						E."U_DscMotivoParada" ,
+						E."U_HorasParadas"
+					WITH READ ONLY ;
+
+COMMIT ;
+--ROLBACK ;
+
+/* SELECT * FROM "vw_fTabelaoApontamento_Agricola" */

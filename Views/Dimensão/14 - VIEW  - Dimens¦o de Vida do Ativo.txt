@@ -1,0 +1,110 @@
+----------------------------------------------------------------------------------- 
+--		      					Dados de Ativos
+-----------------------------------------------------------------------------------
+-- CRIADO POR: 				07/02/2024		JOHNSON WESLEY HRENECHEN	
+-- ( I ) ATUALIZADO POR: 	08/02/2024		JOHNSON WESLEY HRENECHEN
+--			LOG: Foi identificado erros de dupicação na ITM7 para tratar e ITM8 esta trazendo linhas canceladas, sendo tratadas pela coluna de quantity <> 0.
+-- ( II ) ATUALIZADO POR: 
+--			LOG:
+
+-- OBJETIVO: Dimensionalizar os dados de vida dos ativos.
+-- DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+-- SCHEMA: SBOTRUSTAGRO
+-- OBS: Esta dimensão é a união de multiplas dimensões, mesmo não ferindo a lógica de dimensionalidade, ela certamente será menos prática para usar no BI
+-- do que uma versão mais normalizada e mais códigos, tendo em vista que mudanças na dimensão não possuem registro histórico de novos fatos, a pouco impacto real em não usar esta estrutura.
+
+-- Iniciando a transação e definindo o esquema para a consulta
+
+BEGIN TRANSACTION ;
+SET SCHEMA SBOTRUSTAGRO ;
+
+-- Criando uma visão para uso no Power BI
+	CREATE VIEW "SBOTRUSTAGRO"."vw_dDados_Ativos"
+		(
+		"Cod_Ativo"				,
+		"Nome_Ativo"			,
+		"Cod_Ativo_Estoque"		,
+		"Serie_Ativo" 			,
+		"Classe_Ativo"			,
+		"Tipo_Ativo" 			,
+		"Nome_Grupo_Ativo" 		,
+		"Dt_Inicio_Depreciacao"	,
+		"Dt_Fim_Depreciacao"	,
+		"Dt_Aquisicao" 			,
+		"Dt_Capitalizacao" 		,
+		"ValorAquisicao"		,
+		"TipoDepreciacao"		,
+		"Nome_Localizacao"		,
+		"Nome_Inicial"			,
+		"Nome_Meio"				,
+		"Nome_Final"			,
+		"Nome_Inteiro"
+		) AS
+
+SELECT
+			    dItem."ItemCode"                                		AS "Cod_Ativo",
+			    INITCAP ( TRIM ( dItem."ItemName" ) )           		AS "Nome_Ativo",
+			    dItem."InventryNo"                              		AS "Cod_Ativo_Estoque", --Numero do ativo no estoque
+				dItem."AssetSerNo"										AS "Serie_Ativo" ,
+			    INITCAP ( TRIM ( dClasse_Ativo."Name" ) )       		AS "Classe_Ativo",
+			    INITCAP ( TRIM ( SUBSTRING ( dClasse_Ativo."Name", 1, LOCATE ( dClasse_Ativo."Name" , '-' , 1 ) - 1 ) ) ) AS "Tipo_Ativo" ,
+			    INITCAP ( TRIM ( dGrupo_Item."ItmsGrpNam" ) )			AS "Nome_Grupo_Ativo" ,
+			    CAST ( dDepreciacao."DprStart" AS DATE )				AS "Dt_Inicio_Depreciacao",
+			    CAST ( dDepreciacao."DprEnd" AS DATE )					AS "Dt_Fim_Depreciacao",
+			    CAST ( dItem."AcqDate"	AS DATE	)						AS "Dt_Aquisicao" ,
+			    CAST ( dItem."CapDate"	AS DATE )						AS "Dt_Capitalizacao" ,
+			    --dDepreciacao."UsefulLife"                       		AS "VidaUtil_Meses",		-- Será calculado via DAX (Foi identificado erro de cálculo)
+			    --dDepreciacao."RemainLife"                       		AS "VidaRestante_Meses", 	-- Será calculado via DAX (Foi identificado erro de cálculo)
+			    --dDepreciacao."RemainDays"                       		AS "VidaRestante_Dias",		-- Será calculado via DAX (Foi identificado erro de cálculo)
+			    dSaldoDepreciacao."APC"                         		AS "ValorAquisicao",
+			    --dSaldoDepreciacao."OrDpAcc"                   		AS "ValorDepreciado",		-- Será calculado via DAX (Foi identificado erro de cálculo)
+			    INITCAP ( TRIM ( dSaldoDepreciacao."DprArea" ) )     	AS "TipoDepreciacao",
+			    INITCAP ( TRIM ( dLocal."Location" ) )                	AS "Nome_Localizacao",
+			    INITCAP ( TRIM ( dColaborador."firstName" ) )         	AS "Nome_Inicial",
+			    INITCAP ( TRIM ( dColaborador."middleName" ) )        	AS "Nome_Meio",
+			    INITCAP ( TRIM ( dColaborador."lastName" ) )          	AS "Nome_Final",
+			    INITCAP ( TRIM ( dColaborador."firstName" ) || ' ' || COALESCE ( TRIM(dColaborador."middleName" ),'' ) || ' ' || TRIM ( dColaborador."lastName" ) ) AS "Nome_Inteiro"
+			
+			FROM
+			    OITM AS dItem
+			RIGHT JOIN ITM7 AS dDepreciacao
+			    ON dItem."ItemCode" = dDepreciacao."ItemCode"
+			RIGHT JOIN ITM8 AS dSaldoDepreciacao
+			    ON dItem."ItemCode" = dSaldoDepreciacao."ItemCode"
+			LEFT JOIN OLCT AS dLocal
+			    ON dItem."Location" = dLocal."Code"
+			LEFT JOIN OHEM AS dColaborador
+			    ON dItem."Employee" = dColaborador."empID"
+			LEFT JOIN OACS AS dClasse_Ativo
+			    ON dItem."AssetClass" = dClasse_Ativo."Code"
+			LEFT JOIN OITB AS dGrupo_Item
+				ON dItem."ItmsGrpCod" = dGrupo_Item."ItmsGrpCod"
+			WHERE
+			    dLocal."Location" <> 'ITEM VIRTUAL'  -- ITEM VIRTUAL É A LOCALIZAÇÃO USADA PARA AQUISIÇÃO DO ATIVO PELO COMPRAS, SENDO POSTERIORMENTE RECRIADO SOB NOVO CÓDIGO.
+				AND dItem."Canceled" = 'N'
+				--AND	dItem."ItemCode" = 'IMB00853' -- Qntd 0 e APC 0, se trocar Right por Inner, deve eliminar a necessidade de Quantity e permitir a exposição deles.
+				AND dSaldoDepreciacao."Quantity" <> 0 -- ITM8 possui itens cancelados constando como normais, devendo ser filtrados por esta linha
+			GROUP BY -- Necessidade de dar Group By, devido a tabela dDepreciacao ( ITM7 ) devido ter erro de calculo em suas colunas calculadas.
+				dItem."ItemCode"				,
+				dItem."ItemName"				,
+				dItem."InventryNo"				,
+				dItem."AssetSerNo"				,
+				dClasse_Ativo."Name"			,
+				dGrupo_Item."ItmsGrpNam"		,
+				dDepreciacao."DprStart"			,
+				dDepreciacao."DprEnd"			,
+				dItem."AcqDate"					,
+				dItem."CapDate"					,
+				dSaldoDepreciacao."APC" 		,
+				dSaldoDepreciacao."DprArea"		,
+				dLocal."Location"				,
+				dColaborador."firstName"		,
+				dColaborador."middleName"		,
+				dColaborador."lastName"			;
+				
+
+								
+-- Concluir a transação
+-- COMMIT ;
+-- Caso algo dê errado, desfazer todas as operações da transação
+-- ROLLBACK;	

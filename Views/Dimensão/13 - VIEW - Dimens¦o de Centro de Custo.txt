@@ -1,0 +1,34 @@
+----------------------------------------------------------------------------------- 
+--		      					Grupo de Contas (Centros de Custo)
+-----------------------------------------------------------------------------------
+-- CRIADO POR: 				??/??/2023		RONALDO JUNQUEIRA	
+-- ( I ) ATUALIZADO POR: 	17/01/2024		JOHNSON WESLEY HRENECHEN
+--			LOG: Adequação das nomenclaturas, nome  documentação, controle de transação
+--			e tratamento das descrições e contas ao padrão TRUST.
+-- ( II ) ATUALIZADO POR: 	
+
+-- OBJETIVO: Dimensionalizar as contas dos centros de custo do grupo.
+-- DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
+-- SCHEMA: SBOTRUSTAGRO
+
+-- Iniciando a transação e definindo o esquema para a consulta
+BEGIN TRANSACTION;
+SET SCHEMA SBOTRUSTAGRO;
+
+-- Criando uma visão para uso no Power BI
+	CREATE VIEW "SBOTRUSTAGRO"."vw_dGrupo_Contas"
+	(
+	"Cod_Conta" ,
+	"Nome_Conta" ,
+	"Nivel_Conta"
+	) AS
+		SELECT
+			dGrupo_Contas."PrcCode" AS "Cod_Conta" ,
+			INITCAP ( dGrupo_Contas."PrcName" ) AS "Nome_Conta" ,
+			dGrupo_Contas."DimCode" AS "Nivel_Conta"
+		FROM OPRC AS dGrupo_Contas ;
+
+-- Concluir a transação
+-- COMMIT ;
+-- Caso algo dê errado, desfazer todas as operações da transação
+-- ROLLBACK;	
