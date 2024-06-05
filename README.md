@@ -41,3 +41,5 @@ Ex:
 No caso de tabelas de cabeçalho/item o padrão de nomes a ser ultilizado é `Cabecalhos` para a tabela cabeçalho e `CabecalhoTipoItem` para os itens.
 
 Por exemplo, a tabela `NFEntradas` é uma tabela de cabeçalho, que possui os itens `NFEntradaItens` e `NFEntradaAnexos`.
+
+teste
