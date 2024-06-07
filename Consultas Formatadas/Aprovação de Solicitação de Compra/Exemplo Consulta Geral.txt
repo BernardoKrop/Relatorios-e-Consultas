@@ -1,0 +1,9 @@
+SELECT CASE
+         WHEN (Grupos."U_ControlaEstoque" = 'S')
+          AND ($[$38.2003] = '') 
+          THEN 'TRUE'
+          ELSE 'FALSE'
+        END AS ESTOQUE
+   FROM OITM Item
+   INNER JOIN OITB Grupos ON Item."ItmsGrpCod" = Grupos."ItmsGrpCod"
+ WHERE Item."ItemCode" = $[$38.1]
