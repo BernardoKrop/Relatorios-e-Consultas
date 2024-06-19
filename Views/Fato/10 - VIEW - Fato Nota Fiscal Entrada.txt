@@ -3,8 +3,8 @@
 /*==================================================================================*/
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  CRIADO POR: 				24/04/2024		JOHNSON WESLEY HRENECHEN	
- ( I ) ATUALIZADO POR: 		
-    LOG: 	
+ ( I ) ATUALIZADO POR: 		18/06/2024      BERNARDO S. KROPIWIEC
+    LOG: NOVAS COLUNAS DE CENTRO DE CUSTO E SHIPDATE ADICIONADAS, BEM COMO ALIAS DE TABELA PARA SE ENQUADRAREM NO NOVO PADRÃO
 
  OBJETIVO: 	Uso para Power Bi
  DESCRIÇÃO: Permite visualizar e conectar a tabela fato sobre as autorizações, com as devidas etapas dos documentos de marketing.
@@ -44,79 +44,87 @@ ALTER VIEW "SBOTRUSTAGRO"."vw_fNFEntrada"
 	) AS
 /*++++++++++++++++++++++++++++++++CORPO DA CONSULTA++++++++++++++++++++++++++++++++*/
 SELECT 
-		dNFE_Entrada."DocEntry"													AS "Entrada_Cod"
-		, fNFE_Entrada."ObjType"												AS "Objeto_Tipo"
-		, dNFE_Entrada."DocNum"													AS "Interno_Cod"
-		, dNFE_Entrada."DocStatus"												AS "Status"
-		, COALESCE ( fNFE_EntradaExtendido."MainUsage", '-1' )					AS "Utilidade_Cod" --Flag interna para indicar CFOP 
-		, COALESCE ( fNFE_Entrada."BaseEntry" , '-1' )							AS "BaseEntrada_Cod"
-		, fNFE_Entrada."BaseType"												AS "BaseObjeto_Tipo"
-		, fNFE_EntradaAdiantamento."BaseAbs"									AS "BaseEntradaAD_Cod"
-		, fNFE_EntradaAdiantamento."BaseType"									AS "BaseADObjeto_Tipo"
-		, COALESCE ( dNFE_Entrada."OwnerCode", '-1' )							AS "Titular_Cod"	
-		, CAST 	( dNFE_Entrada."TaxDate" AS DATE )								AS "Dt_Emissao"   
-		, CAST 	( dNFE_Entrada."DocDueDate" AS DATE )							AS "Dt_Vencimento"
+		NFEntrada."DocEntry"													AS "Entrada_Cod"
+		, NFEntradaItem."ObjType"												AS "Objeto_Tipo"
+		, NFEntrada."DocNum"													AS "Interno_Cod"
+		, NFEntrada."DocStatus"												AS "Status"
+		, COALESCE ( NFEntradaExtendido."MainUsage", '-1' )					AS "Utilidade_Cod" --Flag interna para indicar CFOP 
+		, COALESCE ( NFEntradaItem."BaseEntry" , '-1' )							AS "BaseEntrada_Cod"
+		, NFEntradaItem."BaseType"												AS "BaseObjeto_Tipo"
+		, NFEntradaAdiantamento."BaseAbs"									AS "BaseEntradaAD_Cod"
+		, NFEntradaAdiantamento."BaseType"									AS "BaseADObjeto_Tipo"
+		, COALESCE ( NFEntrada."OwnerCode", '-1' )							AS "Titular_Cod"	
+		, CAST 	( NFEntrada."TaxDate" AS DATE )								AS "Dt_Emissao"   
+		, CAST 	( NFEntrada."DocDueDate" AS DATE )							AS "Dt_Vencimento"
+		, TO_DATE(NFEntradaItem."ShipDate")                                 AS "Data Envio"
 		, TO_TIMESTAMP(
-	  		TO_VARCHAR(dNFE_Entrada."DocDate", 'YYYYMMDD') || ' ' ||
-	    	LPAD(TO_VARCHAR(dNFE_Entrada."DocTime"), 4, '0') ,
+	  		TO_VARCHAR(NFEntrada."DocDate", 'YYYYMMDD') || ' ' ||
+	    	LPAD(TO_VARCHAR(NFEntrada."DocTime"), 4, '0') ,
 	      'YYYYMMDD HH24MI') 													AS "Dt_Hrs_Lancamento"	
 	   	, TO_TIMESTAMP(
-			TO_VARCHAR(dNFE_Entrada."UpdateDate", 'YYYYMMDD') || ' ' ||
-	   		LPAD(TO_VARCHAR(dNFE_Entrada."UpdateTS"), 6, '0') ,
+			TO_VARCHAR(NFEntrada."UpdateDate", 'YYYYMMDD') || ' ' ||
+	   		LPAD(TO_VARCHAR(NFEntrada."UpdateTS"), 6, '0') ,
 	   	  'YYYYMMDD HH24MISS') 													AS "Dt_Hrs_Atualizacao"	      
-		, dNFE_Entrada."CardCode"												AS "Fornecedor_Cod"
-		, fNFE_Entrada."ItemCode"												AS "Item_Cod"
-		, fNFE_Entrada."Quantity"												AS "Volume_Total"
-		, fNFE_Entrada."Price"													AS "Preco"
-	 	, ( ( fNFE_Entrada."LineTotal" / CASE
-	 									 	WHEN ( SUM( fNFE_Entrada."LineTotal" ) OVER (PARTITION BY dNFE_Entrada."DocNum" ) ) = 0 
+		, NFEntrada."CardCode"												AS "Fornecedor_Cod"
+		, NFEntradaItem."ItemCode"												AS "Item_Cod"
+		, NFEntradaItem."Quantity"												AS "Volume_Total"
+		, NFEntradaItem."Price"													AS "Preco"
+	 	, ( ( NFEntradaItem."LineTotal" / CASE
+	 									 	WHEN ( SUM( NFEntradaItem."LineTotal" ) OVER (PARTITION BY NFEntrada."DocNum" ) ) = 0 
 	 									 	THEN null
-	 									 	ELSE ( SUM( fNFE_Entrada."LineTotal" ) OVER (PARTITION BY dNFE_Entrada."DocNum" ) ) 
+	 									 	ELSE ( SUM( NFEntradaItem."LineTotal" ) OVER (PARTITION BY NFEntrada."DocNum" ) ) 
 	 									 END ) *
-						COALESCE ( dNFE_Entrada."DiscSum" , 0 ) ) 				AS "Valor_DescontoRateio"
-		, dNFE_Entrada."BPLId"													AS "Filial"
-		, fNFE_Entrada."OcrCode"												AS "Unidade"
-		, fNFE_Entrada."OcrCode2"												AS "Departamento"
-		, dNFE_Entrada."Comments"												AS "Comentarios"
+						COALESCE ( NFEntrada."DiscSum" , 0 ) ) 				AS "Valor_DescontoRateio"
+		, NFEntrada."BPLId"													AS "Filial"
+		, NFEntradaItem."OcrCode"										    AS "Unidade"
+		, NFEntradaItem."OcrCode2"					 						AS "Departamento"
+		, NFEntradaItem."OcrCode3"                                          AS "Natureza"
+		, NFEntradaItem."OcrCode4"                                          AS "Frete"
+		, NFEntrada."Comments"												AS "Comentarios"
 
-		FROM OPCH										AS dNFE_Entrada
-		INNER JOIN 	PCH1								AS fNFE_Entrada
-			ON dNFE_Entrada."DocEntry"	=	fNFE_Entrada."DocEntry"
-		LEFT JOIN	PCH11								AS fNFE_EntradaAdiantamento
-			ON dNFE_Entrada."DocEntry"	=	fNFE_EntradaAdiantamento."DocEntry"
-		LEFT JOIN 	PCH12								AS fNFE_EntradaExtendido -- Traz dados sobre 
-			ON dNFE_Entrada."DocEntry" 	=	fNFE_EntradaExtendido."DocEntry"
+		FROM OPCH										AS NFEntrada
+		INNER JOIN 	PCH1								AS NFEntradaItem
+			ON NFEntrada."DocEntry"	=	NFEntradaItem."DocEntry"
+		LEFT JOIN	PCH11								AS NFEntradaAdiantamento
+			ON NFEntrada."DocEntry"	=	NFEntradaAdiantamento."DocEntry"
+		LEFT JOIN 	PCH12								AS NFEntradaExtendido -- Traz dados sobre 
+			ON NFEntrada."DocEntry" 	=	NFEntradaExtendido."DocEntry"
 		-- Permite conectar com a OUSG que armazena os dados de CFOP
 		WHERE
-			dNFE_Entrada."CANCELED" 	<> 'C'
-			AND fNFE_EntradaAdiantamento."BaseAbs" IS NOT NULL
+			NFEntrada."CANCELED" 	<> 'C'
+			AND NFEntradaAdiantamento."BaseAbs" IS NOT NULL
 		GROUP BY
-			dNFE_Entrada."DocEntry"
-			, fNFE_Entrada."BaseEntry"
-			, dNFE_Entrada."DocNum"
-			, dNFE_Entrada."DocStatus"
-			, fNFE_Entrada."BaseType"
-			, fNFE_Entrada."ItemCode"
-			, fNFE_Entrada."ObjType"
-			, fNFE_Entrada."Quantity"
-			, fNFE_Entrada."Price"
-			, fNFE_Entrada."LineTotal"
-			, dNFE_Entrada."DiscSum"
-			, dNFE_Entrada."UpdateTS"
-			, dNFE_Entrada."UpdateDate"
-			, dNFE_Entrada."DocTime"
-			, dNFE_Entrada."TaxDate"
-			, dNFE_Entrada."DocDueDate"
-			, dNFE_Entrada."DocDate"
-			, dNFE_Entrada."CardCode"
-			, dNFE_Entrada."BPLId"
-			, fNFE_Entrada."OcrCode"
-			, fNFE_Entrada."OcrCode2"
-			, dNFE_Entrada."Comments"
-			, dNFE_Entrada."OwnerCode"
-			, fNFE_EntradaExtendido."MainUsage"
-			, fNFE_EntradaAdiantamento."BaseAbs"
-			, fNFE_EntradaAdiantamento."BaseType"
+			NFEntrada."DocEntry"
+			, NFEntradaItem."BaseEntry"
+			, NFEntrada."DocNum"
+			, NFEntrada."DocStatus"
+			, NFEntradaItem."BaseType"
+			, NFEntradaItem."ItemCode"
+			, NFEntradaItem."ObjType"
+			, NFEntradaItem."Quantity"
+			, NFEntradaItem."Price"
+			, NFEntradaItem."LineTotal"
+			, NFEntrada."DiscSum"
+			, NFEntrada."UpdateTS"
+			, NFEntrada."UpdateDate"
+			, NFEntrada."DocTime"
+			, NFEntrada."TaxDate"
+			, NFEntrada."DocDueDate"
+			, NFEntrada."DocDate"
+			, NFEntrada."CardCode"
+			, NFEntrada."BPLId"
+			, NFEntradaItem."OcrCode"
+			, NFEntradaItem."OcrCode2"
+			, NFEntrada."Comments"
+			, NFEntrada."OwnerCode"
+			, NFEntradaExtendido."MainUsage"
+			, NFEntradaAdiantamento."BaseAbs"
+			, NFEntradaAdiantamento."BaseType"
+			, NFEntradaItem."ShipDate"
+			, NFEntradaItem."OcrCode3" 
+			, NFEntradaItem."OcrCode4" 
 		
 		ORDER BY
-			dNFE_Entrada."DocNum" DESC
+			NFEntrada."DocNum" DESC
+			
+			
