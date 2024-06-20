@@ -5,22 +5,13 @@
 Os nomes das tabelas e colunas devem ter letra maiúscula na primeira letra de cada palavra, sem espaços entre palavras, seguindo o padrão [UpperCamelCase](https://pt.wikipedia.org/wiki/CamelCase#cite_note-N%C3%A3o-nomeado-xZat-1-7), com siglas tendo todas suas letras capitalizadas. Todos os termos devem estar em português, exceto alguns termos que não há tradução apropriada. 
 Sempre prefira nomes descritivos, evitando ao máximo contradições e tentando manter os nomes com menos de 20 caracteres.
 
-## Tabelas - Alias
+## Tabelas e Colunas - Apelidos
 
-Os nomes das tabelas devem estar no **plural**.
-
-Ex:
-- **Bom**: `Usuarios`, `Posts`, `Grupos`
-- **Ruim**: `user`, `Post`, `grupo`
-
-## Colunas - Alias
-
-Os alias (Apelidos) das colunas devem estar no **singular**. Caso a consulta seja para um usuario final, deve estar formatado para tal.
+Os nomes das tabelas devem estar no **singular**.
 
 Ex:
-- **Bom**: `CPF`, `Nome`, `Idade`, `Número Nota`
-- **Ruim**: `Cpf`, `Nomes`, `idade`, `NumeroNota`
-
+- **Bom**: `Usuario`, `Post`, `Grupo`
+- **Ruim**: `users`, `Posts`, `grupos`
 
 ## Foreign keys
 
