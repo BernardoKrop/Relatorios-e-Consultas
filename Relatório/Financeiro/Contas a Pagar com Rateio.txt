@@ -1,0 +1,191 @@
+/* CONTAS A PAGAR */
+
+SELECT
+
+/*========================== DESCRITIVO DAS CONTAS ==========================*/ 
+
+    fLivro_Razao."BPLId" 		AS Filial
+    , fLivro_Razao."BPLName" 	AS FilialNome 
+	, CASE
+		WHEN dLivro_Razao."TransType" = '18' 	THEN dNFE_Entrada."DocNum" 	    -- Numero de Nota Fiscal
+		WHEN dLivro_Razao."TransType" = '204' 	THEN dAdiantamento."DocNum" 	-- Numero de Adiantamento
+		WHEN dLivro_Razao."TransType" = '30'	THEN dLivro_Razao."TransId"		-- Numero de Lançamento Contabil do Documento de Baixa
+	END AS "Numero Interno" 
+	, CASE
+		WHEN dLivro_Razao."TransType" = '18' 	THEN dNFE_Entrada."CardName"
+		WHEN dLivro_Razao."TransType" = '204'	THEN dAdiantamento."CardName" 
+		WHEN dLivro_Razao."TransType" = '30' 	THEN fLivro_Razao."Ref1"
+	END AS "Fornecedor"    
+	, CASE
+        WHEN dLivro_Razao."TransType" = '18'  	THEN fNFE_Entrada."ItemCode"		
+        WHEN dLivro_Razao."TransType" = '204' 	THEN fAdiantamento."ItemCode"
+        WHEN dLivro_Razao."TransType" = '30'  	THEN fLivro_Razao."Ref1"
+    END AS "Item"
+    , CASE
+        WHEN dLivro_Razao."TransType" = '18'  	THEN 'NF' 						-- Nota Fiscal
+        WHEN dLivro_Razao."TransType" = '204' 	THEN 'AD'						-- Adiantamento
+        WHEN dLivro_Razao."TransType" = '30'  	THEN 'LC' 						-- Lançamento Contábil 
+    END AS "Doc Tipo" 
+
+/*========================== VALOR DAS CONTAS ==========================*/
+
+    , CASE
+		WHEN dLivro_Razao."TransType" = '18' 	THEN dNFE_Entrada."DocTotal"  
+		WHEN dLivro_Razao."TransType" = '204' 	THEN dAdiantamento."DocTotal"
+		WHEN dLivro_Razao."TransType" = '30'  	THEN dLivro_Razao."LocTotal"
+     END AS "Valor Documento Origem"	  -- Valor Total do documento de origem
+	, CASE
+		WHEN dLivro_Razao."TransType" = '18' 	THEN fNFE_Prestacao."InsTotal"  
+		WHEN dLivro_Razao."TransType" = '204'	THEN fAD_Prestacao."InsTotal"
+		WHEN dLivro_Razao."TransType" = '30' 	THEN fLivro_Razao."Credit" -- fLivro_Razao."Debit"  	
+	END AS "A pagar" 	 				-- Referente ao valor da parcela
+	, CASE
+		WHEN dLivro_Razao."TransType" = '18'  	THEN fNFE_Entrada."LineTotal" / dNFE_Entrada."Installmnt"
+		WHEN dLivro_Razao."TransType" = '204' 	THEN fAdiantamento."LineTotal" / dAdiantamento."Installmnt"
+		WHEN dLivro_Razao."TransType" = '30'  	THEN dLivro_Razao."LocTotal"
+     END AS "Rateio Previsto"  --A premissa central olha para o "DocTotal" rateiando com base no valor do documento, se usar InsTotal, irá ser rateado com base no valor da parcela.
+	, CASE
+		WHEN dLivro_Razao."TransType" = '18' 	THEN fNFE_Prestacao."InstlmntID"
+		WHEN dLivro_Razao."TransType" = '204'	THEN fAD_Prestacao."InstlmntID" 
+		WHEN dLivro_Razao."TransType" = '30' 	THEN NULL
+	END AS "Prestação" 
+	, CASE
+		WHEN dLivro_Razao."TransType" = '18' 	THEN dNFE_Entrada."Installmnt"
+		WHEN dLivro_Razao."TransType" = '204'	THEN dAdiantamento."Installmnt"
+		WHEN dLivro_Razao."TransType" = '30' 	THEN NULL
+	END AS "Parcela" 	 
+
+/*========================== DATA DAS CONTAS ==========================*/ 
+
+	, CASE
+	   WHEN dLivro_Razao."TransType" = '18'  	THEN CAST ( dNFE_Entrada."DocDate" AS DATE 	)
+	   WHEN dLivro_Razao."TransType" = '204' 	THEN CAST ( dAdiantamento."DocDate" AS DATE 	)         
+	   WHEN dLivro_Razao."TransType" = '30'  	THEN CAST ( dLivro_Razao."RefDate" AS DATE 	)
+	END AS "DtLancamento"
+	, CASE
+	   WHEN dLivro_Razao."TransType" = '18'  	THEN CAST ( fNFE_Prestacao."DueDate" AS DATE 	)
+	   WHEN dLivro_Razao."TransType" = '204' 	THEN CAST ( fAD_Prestacao."DueDate" AS DATE 	)         
+	   WHEN dLivro_Razao."TransType" = '30'  	THEN CAST ( dLivro_Razao."DueDate" AS DATE 	)
+	END AS "DtVencimento"
+   , CASE
+       WHEN dLivro_Razao."TransType" = '18'  	THEN CAST ( dNFE_Entrada."TaxDate" AS DATE 	)
+       WHEN dLivro_Razao."TransType" = '204' 	THEN CAST ( dAdiantamento."TaxDate" AS DATE 	)        
+       WHEN dLivro_Razao."TransType" = '30'  	THEN CAST ( dLivro_Razao."TaxDate" AS DATE 	)
+   END AS "DtEmissao"
+
+/*========================== DIMENSAO DAS CONTAS ==========================*/
+
+	, CASE
+		WHEN dLivro_Razao."TransType" = '18' 	THEN fNFE_Entrada."OcrCode"
+		WHEN dLivro_Razao."TransType" = '204' 	THEN fAdiantamento."OcrCode"
+		WHEN dLivro_Razao."TransType" = '30' 	THEN fLivro_Razao."ProfitCode"
+		ELSE NULL
+	END AS "Unidade" 
+	, CASE
+		WHEN dLivro_Razao."TransType" = '18' 	THEN fNFE_Entrada."OcrCode2"
+		WHEN dLivro_Razao."TransType" = '204' 	THEN fAdiantamento."OcrCode2"
+		WHEN dLivro_Razao."TransType" = '30' 	THEN fLivro_Razao."OcrCode2"
+		ELSE NULL
+	END AS "Departamento" 
+	, CASE
+		WHEN dLivro_Razao."TransType" = '18' 	THEN fNFE_Entrada."OcrCode3"
+		WHEN dLivro_Razao."TransType" = '204' 	THEN fAdiantamento."OcrCode3"
+		WHEN dLivro_Razao."TransType" = '30' 	THEN fLivro_Razao."OcrCode3"
+		ELSE NULL
+	END AS "Natureza" 
+
+	FROM OJDT				AS dLivro_Razao
+	INNER JOIN JDT1			AS fLivro_Razao
+		ON 	dLivro_Razao."TransId" 		= fLivro_Razao."TransId"
+		AND fLivro_Razao."TransId" NOT IN (SELECT "baseAbs" FROM VPM2 WHERE "InvType" = dLivro_Razao."ObjType")
+	LEFT OUTER JOIN OPCH	AS dNFE_Entrada
+		ON 	dLivro_Razao."TransId" 		= dNFE_Entrada."TransId"
+		AND	dLivro_Razao."TransType"	= dNFE_Entrada."ObjType"
+		AND dNFE_Entrada."DocEntry" NOT IN (SELECT "baseAbs" FROM VPM2 WHERE "InvType" = dNFE_Entrada."ObjType")
+	LEFT OUTER JOIN PCH1	AS fNFE_Entrada
+		ON 	dNFE_Entrada."DocEntry" 	= fNFE_Entrada."DocEntry"
+	LEFT OUTER JOIN PCH6	AS fNFE_Prestacao
+		ON 	dNFE_Entrada."DocEntry" 	= fNFE_Prestacao."DocEntry"
+	LEFT OUTER JOIN ODPO	AS dAdiantamento
+		ON 	dLivro_Razao."TransId" 		= dAdiantamento."TransId"
+		AND	dLivro_Razao."TransType"	= dAdiantamento."ObjType"
+		AND dAdiantamento."DocEntry" NOT IN (SELECT "baseAbs" FROM VPM2 WHERE "InvType" = dAdiantamento."ObjType")
+	LEFT OUTER JOIN DPO1	AS fAdiantamento
+		ON 	dAdiantamento."DocEntry" 	= fAdiantamento."DocEntry"
+	LEFT OUTER JOIN DPO6	AS fAD_Prestacao
+		ON 	dAdiantamento."DocEntry" 	= fAD_Prestacao."DocEntry"
+
+	WHERE
+--		fLivro_Razao."SourceID" IS NOT NULL
+		(
+		dLivro_Razao."TransType"		= '30' OR
+ 		dNFE_Entrada."CANCELED" 		= 'N'  OR
+ 		dAdiantamento."CANCELED" 		= 'N'
+ 		)
+		AND fLivro_Razao."Ref3Line" IS NOT NULL	 
+		AND fLivro_Razao."MthDate" IS NULL	
+		/*AND (
+			dLivro_Razao."BtfStatus" 	= 'O' 	OR
+			dNFE_Entrada."DocStatus" 	= 'O'	OR
+			fNFE_Prestacao."Status" 	= 'O' 	OR			
+			dAdiantamento."DocStatus" 	= 'O'	OR
+			fAD_Prestacao."Status" 		= 'O'
+			)*/
+		AND ('O' = CASE  
+		             WHEN dLivro_Razao."TransType" = '18' 	THEN dNFE_Entrada."DocStatus" 
+		             WHEN dLivro_Razao."TransType" = '204' 	THEN dAdiantamento."DocStatus"
+		             WHEN dLivro_Razao."TransType" = '30' 	THEN dLivro_Razao."BtfStatus"
+		           END)
+		AND (0 < CASE 
+		           WHEN dLivro_Razao."TransType" = '18' 	THEN fNFE_Prestacao."InsTotal"  
+		           WHEN dLivro_Razao."TransType" = '204'	THEN fAD_Prestacao."InsTotal"
+		           WHEN dLivro_Razao."TransType" = '30' 	THEN fLivro_Razao."Credit" 
+		         END)
+		
+	GROUP BY
+		dLivro_Razao."TransType"
+		, fLivro_Razao."BPLId" 		
+    	, fLivro_Razao."BPLName" 	  	 
+		, dAdiantamento."DocNum" 	
+		, dLivro_Razao."TransId"		
+		, dNFE_Entrada."CardName"
+		, dAdiantamento."CardName" 
+        , fNFE_Entrada."ItemCode"		
+        , fAdiantamento."ItemCode"
+        , fLivro_Razao."Ref1"
+		, dNFE_Entrada."DocTotal"  
+		, dAdiantamento."DocTotal"  
+		, fLivro_Razao."Credit" 
+		, fLivro_Razao."Debit"  	 
+		, fNFE_Entrada."LineTotal"
+		, fNFE_Prestacao."InsTotal"
+		, dNFE_Entrada."DocNum"
+		, fAdiantamento."LineTotal"
+		, fAD_Prestacao."InsTotal"
+		, dLivro_Razao."LocTotal"
+		, fNFE_Prestacao."InstlmntID"
+		, fAD_Prestacao."InstlmntID" 
+		, dNFE_Entrada."Installmnt"
+		, dAdiantamento."Installmnt" 
+		, dNFE_Entrada."DocDate"
+		, dAdiantamento."DocDate"         
+		, dLivro_Razao."RefDate"
+		, fNFE_Prestacao."DueDate"
+		, fAD_Prestacao."DueDate"         
+		, dLivro_Razao."DueDate"
+		, dNFE_Entrada."TaxDate"
+    	, dAdiantamento."TaxDate"        
+		, dLivro_Razao."TaxDate"
+		, fNFE_Entrada."OcrCode"
+		, fAdiantamento."OcrCode"
+		, fLivro_Razao."ProfitCode"
+		, fNFE_Entrada."OcrCode2"
+		, fAdiantamento."OcrCode2"
+		, fLivro_Razao."OcrCode2"
+		, fNFE_Entrada."OcrCode3"
+		, fAdiantamento."OcrCode3"
+		, fLivro_Razao."OcrCode3"
+		    
+	ORDER BY
+		"Numero Interno" ASC ,
+		fNFE_Prestacao."InstlmntID" ASC
