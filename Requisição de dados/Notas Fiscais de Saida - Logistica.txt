@@ -1,0 +1,21 @@
+SELECT NFSaida."BPLName"             AS "Filial",
+       NFSaida."Serial"              AS "Nr Nota",
+       NFSaida."DocNum"              AS "Cod Interno",
+       NFSaidaItem."ItemCode"        AS "Cod Item",
+       NFSaidaItem."Dscription"      AS "Descrição",
+       NFSaidaItem."Quantity"        AS "Quantidade",
+       NFSaidaItem."Price"           AS "Valor Item",
+       NFSaidaItem."LineTotal"       AS "Valor Total",
+       TO_DATE(NFSaida."DocDate")    AS "Data Lançamento",
+       TO_DATE(NFSaida."DocDueDate") AS "Data Vencimento",
+       TO_DATE(NFSaida."TaxDate")    AS "Data Documento",
+       Modelo."NfmName"              AS "Modelo",
+       Usuario."U_NAME"              AS "Usuario"
+  FROM       OINV NFSaida
+  INNER JOIN INV1 NFSaidaItem ON NFSaida."DocEntry" = NFSaidaItem."DocEntry"
+  LEFT  JOIN OOCR Frota       ON NFSaidaItem."OcrCode4" = Frota."OcrCode"
+  LEFT  JOIN ONFM Modelo      ON NFSaida."Model" = Modelo."AbsEntry"
+  LEFT  JOIN OUSR Usuario     ON NFSaida."UserSign" = Usuario."USERID"
+WHERE NFSaida."BPLId" = 19
+
+
