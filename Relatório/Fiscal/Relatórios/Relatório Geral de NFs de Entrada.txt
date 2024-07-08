@@ -1,70 +1,43 @@
-SELECT TO_DATE(dNFe."CreateDate")         AS DATA_CRIACAO,
-       dModelo."NfmName"                  AS MODELO_SERVICO,
-       dNFe."CardName"                    AS PRESTADOR,
-       dPrestador."LicTradNum"            AS CPF_CNPJ,
-       dFilial."TaxIdNum"                 AS FILIAL,
-       dNFe."Serial"                      AS NR_NF,
-       dNFe."U_TX_CodNatRend"             AS NAT_REND,
-       dNFe."DocEntry"                    AS DocEntry,
-       STRING_AGG(fNFe."BaseRef", ', ')   AS PEDIDOS,
-       dNFe."WTApplied"                   AS VLR_RETIDO ,
-       dNFe."DocTotal"                    AS VLR_TOTAL,
-       fUsuario."U_NAME"                  AS USUARIO,
-       TO_DATE(dNFe."DocDueDate")         AS DATA_PAGAMENTO,
-       TO_DATE(dNFe."DocDate")            AS DATA_EMISSAO
-  FROM      OPCH dNFe
-  LEFT JOIN ONFM dModelo    ON dNFe."Model"    = dModelo."AbsEntry"
-  LEFT JOIN OBPL dFilial    ON dNFe."BPLId"    = dFilial."BPLId"
-  LEFT JOIN OCRD dPrestador ON dNFe."CardCode" = dPrestador."CardCode"
+SELECT TO_DATE(NFEntrada."CreateDate")         AS DATA_CRIACAO,
+       Modelo."NfmName"                  AS MODELO_SERVICO,
+       NFEntrada."CardName"                    AS PRESTADOR,
+       Prestador."LicTradNum"            AS CPF_CNPJ,
+       Filial."TaxIdNum"                 AS FILIAL,
+       NFEntrada."Serial"                      AS NR_NF,
+       NFEntrada."U_TX_CodNatRend"             AS NAT_REND,
+       NFEntrada."DocEntry"                    AS DocEntry,
+       STRING_AGG(NFEntradaItem."BaseRef", ', ')   AS PEDIDOS,
+       NFEntrada."WTApplied"                   AS VLR_RETIDO ,
+       NFEntrada."DocTotal"                    AS VLR_TOTAL,
+       Usuario."U_NAME"                  AS USUARIO,
+       TO_DATE(NFEntrada."DocDueDate")         AS DATA_PAGAMENTO,
+       TO_DATE(NFEntrada."DocDate")            AS DATA_EMISSAO
+  FROM      OPCH NFEntrada
+  LEFT JOIN ONFM Modelo    ON NFEntrada."Model"    = Modelo."AbsEntry"
+  LEFT JOIN OBPL Filial    ON NFEntrada."BPLId"    = Filial."BPLId"
+  LEFT JOIN OCRD Prestador ON NFEntrada."CardCode" = Prestador."CardCode"
   LEFT JOIN (SELECT DISTINCT PCH1."BaseRef",
   					PCH1."DocEntry" 
   		       FROM PCH1) 
-  		    fNFe ON dNFe."DocEntry" = fNFe."DocEntry"
+  		    NFEntradaItem ON NFEntrada."DocEntry" = NFEntradaItem."DocEntry"
   LEFT JOIN (SELECT "DocEntry",
   					"UserSign",
   					"ObjType",
                     ROW_NUMBER() OVER (PARTITION BY "DocEntry" ORDER BY "DocDate") AS RowNum
              FROM ADOC
-             ) fPedido ON dNFe."DocEntry" = fPedido."DocEntry" AND fPedido.RowNum = 1 AND fPedido."ObjType" = 18
-  INNER JOIN OUSR fUsuario ON fPedido."UserSign" = fUsuario."USERID" 	    
---WHERE OPCH."DocNum" = 4923
-GROUP BY dNFe."CreateDate",
-       	 dModelo."NfmName",
-         dNFe."CardName",
-         dFilial."BPLName",
-         dNFe."Serial",
-         dNFe."U_TX_CodNatRend",
-         dNFe."DocEntry",
-         dNFe."WTApplied",
-         dNFe."DocTotal",
-         fUsuario."U_NAME",
-         dFilial."TaxIdNum",
-         dPrestador."LicTradNum",
-         dNFe."DocDueDate",
-         dNFe."DocDate"
-  
-SELECT * FROM OBPL       
-SELECT * FROM OBPL
-SELECT * FROM OCRD
-
-
-
-
-            
-SELECT PCH5."WTCode"       AS COD_IMPOSTO,
-	   PCH5."Rate"     AS ALIQUOTA,
-	   OWHT."WTName"   AS NOME_IMPOSTO ,
-	   PCH5."Account"  AS CONTA,
-	   PCH5."WTAmnt"   AS VALOR, 
-	   PCH5."AbsEntry" AS DocEntry
-  FROM       PCH5 
-  INNER JOIN OWHT ON PCH5."WTCode" = OWHT."WTCode"
-
---WHERE PCH5."AbsEntry" = 9797  
-
-
-
-{Comando.Vencimento} >= {?Data Inicial} and
-{Comando.Vencimento} <= {?Data Final}
-
-
+             ) PedItem ON NFEntrada."DocEntry" = PedItem."DocEntry" AND PedItem.RowNum = 1 AND PedItem."ObjType" = 18
+  INNER JOIN OUSR Usuario ON PedItem."UserSign" = Usuario."USERID" 	    
+GROUP BY NFEntrada."CreateDate",
+       	 Modelo."NfmName",
+         NFEntrada."CardName",
+         Filial."BPLName",
+         NFEntrada."Serial",
+         NFEntrada."U_TX_CodNatRend",
+         NFEntrada."DocEntry",
+         NFEntrada."WTApplied",
+         NFEntrada."DocTotal",
+         Usuario."U_NAME",
+         Filial."TaxIdNum",
+         Prestador."LicTradNum",
+         NFEntrada."DocDueDate",
+         NFEntrada."DocDate"

@@ -1,30 +1,26 @@
-SELECT dNFEntrada."DocNum"             AS "Código Interno",
-	   TO_DATE(dNFEntrada."TaxDate")   AS "Data Emissão",
-	   fNFEntrada."ItemCode"           AS "Código Item",
-	   fNFEntrada."Dscription",
-	   fNFEntrada."Quantity"           AS "Quantidade",
-	   fNFEntrada."Price"              AS "Preço",
-	   fNFEntrada."LineTotal"          AS "Valor da Linha",
-	   fNFEntrada."Project"            AS "Projeto",
-	   fNFEntrada."OcrCode"            AS "Localidade",
-	   fNFEntrada."OcrCode2"           AS "Departamento",
-	   fNFEntrada."OcrCode3"           AS "Natureza Financeira",
-	   dUsuario."U_NAME"
-  FROM OPCH dNFEntrada
-  INNER JOIN PCH1 fNFEntrada
-    ON dNFEntrada."DocEntry" = fNFEntrada."DocEntry"
-  INNER JOIN OPOR dPedido
-    ON fNFEntrada."BaseEntry" = dPedido."DocEntry"
+SELECT NFEntrada."DocNum"             AS "Código Interno",
+	   TO_DATE(NFEntrada."TaxDate")   AS "Data Emissão",
+	   NFEntradaItem."ItemCode"           AS "Código Item",
+	   NFEntradaItem."Dscription",
+	   NFEntradaItem."Quantity"           AS "Quantidade",
+	   NFEntradaItem."Price"              AS "Preço",
+	   NFEntradaItem."LineTotal"          AS "Valor da Linha",
+	   NFEntradaItem."Project"            AS "Projeto",
+	   NFEntradaItem."OcrCode"            AS "Localidade",
+	   NFEntradaItem."OcrCode2"           AS "Departamento",
+	   NFEntradaItem."OcrCode3"           AS "Natureza Financeira",
+	   Usuario."U_NAME"
+  FROM OPCH NFEntrada
+  INNER JOIN PCH1 NFEntradaItem ON NFEntrada."DocEntry" = NFEntradaItem."DocEntry"
+  INNER JOIN OPOR Pedido    ON NFEntradaItem."BaseEntry" = Pedido."DocEntry"
   INNER JOIN (SELECT DISTINCT "DocEntry",
                               "BaseEntry"
-               FROM POR1) fPedido
-    ON dPedido."DocEntry" = fPedido."DocEntry" AND fPedido."BaseEntry" is not null
-  INNER JOIN OPRQ dSolicitacao
-    ON fPedido."BaseEntry" = dSolicitacao."DocEntry"
-  INNER JOIN OUSR dUsuario
-    ON dSolicitacao."UserSign" = dUsuario."USERID"
-WHERE dSolicitacao."UserSign" in (67,87,82) 
-  AND dNFEntrada."CANCELED" = 'N'
-  AND dPedido."CANCELED" = 'N'
-  AND dSolicitacao."CANCELED" = 'N'
-ORDER BY dNFEntrada."TaxDate"
+               FROM POR1) PedidoItem
+    ON Pedido."DocEntry" = PedidoItem."DocEntry" AND PedidoItem."BaseEntry" is not null
+  INNER JOIN OPRQ Solicitacao ON PedidoItem."BaseEntry" = Solicitacao."DocEntry"
+  INNER JOIN OUSR Usuario     ON Solicitacao."UserSign" = Usuario."USERID"
+WHERE Solicitacao."UserSign" in (67,87,82) 
+  AND NFEntrada."CANCELED" = 'N'
+  AND Pedido."CANCELED" = 'N'
+  AND Solicitacao."CANCELED" = 'N'
+ORDER BY NFEntrada."TaxDate"

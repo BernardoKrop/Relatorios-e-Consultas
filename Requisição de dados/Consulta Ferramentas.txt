@@ -5,59 +5,59 @@ Essa consulta busca todos as compras e adiantamentos de itens que se encaixam no
 
 
 SELECT * FROM(
-SELECT fNFe."ItemCode"         AS Cod_Item,
-	   dItem."ItemName"        AS Nome_Item,
-	   fNFe."UomCode"          AS Unidade_Medida,
-	   SUM(fNFe."Quantity")    AS Quantidade,
-	   SUM(fNFe."LineTotal")   AS VALOR_TOTAL,
-	   dFilial."BPLName"       AS Filial,
-	   TO_DATE(dNFe."DocDate") AS Data_NF,
-	   dNFe."Serial"           AS NRO_NF,
-	   fNFe."BaseEntry"
-  FROM       PCH1 fNFe
-  INNER JOIN OPCH dNFe    ON fNFe."DocEntry" = dNFe."DocEntry"
-  LEFT  JOIN OBPL dFilial ON dNFe."BPLId" = dFilial."BPLId"
-  INNER JOIN OITM dItem   ON fNFe."ItemCode" = dItem."ItemCode"
-  INNER JOIN OITB dGrupo  ON dItem."ItmsGrpCod" = dGrupo."ItmsGrpCod"  
-    AND UPPER(dGrupo."ItmsGrpNam") = 'FERRAMENTAS'
-WHERE dNFe."CANCELED" = 'N'
-  AND TO_DATE(dNFe."DocDate") > TO_DATE('01/01/2023','dd/mm/yyyy')
-GROUP BY fNFe."ItemCode",
-	     dItem."ItemName",
-	     dNFe."DocDate",
-	     dNFe."Serial",
-	     dFilial."BPLName",
-	     fNFe."UomCode",
-	     fNFe."BaseEntry"
+SELECT NFEntradaItem."ItemCode"         AS Cod_Item,
+	   Produto."ItemName"        AS Nome_Item,
+	   NFEntradaItem."UomCode"          AS Unidade_Medida,
+	   SUM(NFEntradaItem."Quantity")    AS Quantidade,
+	   SUM(NFEntradaItem."LineTotal")   AS VALOR_TOTAL,
+	   Filial."BPLName"       AS Filial,
+	   TO_DATE(NFEntrada."DocDate") AS Data_NF,
+	   NFEntrada."Serial"           AS NRO_NF,
+	   NFEntradaItem."BaseEntry"
+  FROM       PCH1 NFEntradaItem
+  INNER JOIN OPCH NFEntrada    ON NFEntradaItem."DocEntry" = NFEntrada."DocEntry"
+  LEFT  JOIN OBPL Filial ON NFEntrada."BPLId" = Filial."BPLId"
+  INNER JOIN OITM Produto   ON NFEntradaItem."ItemCode" = Produto."ItemCode"
+  INNER JOIN OITB Grupo  ON Produto."ItmsGrpCod" = Grupo."ItmsGrpCod"  
+    AND UPPER(Grupo."ItmsGrpNam") = 'FERRAMENTAS'
+WHERE NFEntrada."CANCELED" = 'N'
+  AND TO_DATE(NFEntrada."DocDate") > TO_DATE('01/01/2023','dd/mm/yyyy')
+GROUP BY NFEntradaItem."ItemCode",
+	     Produto."ItemName",
+	     NFEntrada."DocDate",
+	     NFEntrada."Serial",
+	     Filial."BPLName",
+	     NFEntradaItem."UomCode",
+	     NFEntradaItem."BaseEntry"
 UNION ALL
-SELECT fNFe."ItemCode"         AS Cod_Item,
-	   dItem."ItemName"        AS Nome_Item,
-	   fNFe."UomCode"          AS Unidade_Medida,
-	   SUM(fNFe."Quantity")    AS Quantidade,
-	   SUM(fNFe."LineTotal")   AS VALOR_TOTAL,
-	   dFilial."BPLName"       AS Filial,
-	   TO_DATE(dNFe."DocDate") AS Data_NF,
-	   dNFe."Serial"           AS NRO_NF,
+SELECT AdiantItem."ItemCode"         AS Cod_Item,
+	   Produto."ItemName"        AS Nome_Item,
+	   AdiantItem."UomCode"          AS Unidade_Medida,
+	   SUM(AdiantItem."Quantity")    AS Quantidade,
+	   SUM(AdiantItem."LineTotal")   AS VALOR_TOTAL,
+	   Filial."BPLName"       AS Filial,
+	   TO_DATE(Adiantamento."DocDate") AS Data_NF,
+	   Adiantamento."Serial"           AS NRO_NF,
 	   CASE 
-	     WHEN fNFe."BaseType" = 22 THEN fNFe."BaseEntry"
+	     WHEN AdiantItem."BaseType" = 22 THEN AdiantItem."BaseEntry"
 	     ELSE '-1'
 	   END  
 	     
-  FROM       DPO1 fNFe
-  INNER JOIN ODPO dNFe    ON fNFe."DocEntry" = dNFe."DocEntry"
-  LEFT  JOIN OBPL dFilial ON dNFe."BPLId" = dFilial."BPLId"
-  INNER JOIN OITM dItem   ON fNFe."ItemCode" = dItem."ItemCode"
-  INNER JOIN OITB dGrupo  ON dItem."ItmsGrpCod" = dGrupo."ItmsGrpCod"  
-	AND UPPER(dGrupo."ItmsGrpNam") = 'FERRAMENTAS'
-WHERE dNFe."CANCELED" = 'N'
-  AND TO_DATE(dNFe."DocDate") > TO_DATE('01/01/2023','dd/mm/yyyy')
-  AND fNFe."DocEntry" NOT IN (SELECT "BaseEntry" FROM PCH1 WHERE "BaseType" = 204)
-GROUP BY fNFe."ItemCode",
-	     dItem."ItemName",
-	     dNFe."DocDate",
-	     dNFe."Serial",
-	     dFilial."BPLName",
-	     fNFe."BaseType",
-	     fNFe."BaseEntry",
-	     fNFe."UomCode") X
+  FROM       DPO1 AdiantItem
+  INNER JOIN ODPO Adiantamento    ON AdiantItem."DocEntry" = Adiantamento."DocEntry"
+  LEFT  JOIN OBPL Filial ON Adiantamento."BPLId" = Filial."BPLId"
+  INNER JOIN OITM Produto   ON AdiantItem."ItemCode" = Produto."ItemCode"
+  INNER JOIN OITB Grupo  ON Produto."ItmsGrpCod" = Grupo."ItmsGrpCod"  
+	AND UPPER(Grupo."ItmsGrpNam") = 'FERRAMENTAS'
+WHERE Adiantamento."CANCELED" = 'N'
+  AND TO_DATE(Adiantamento."DocDate") > TO_DATE('01/01/2023','dd/mm/yyyy')
+  AND AdiantItem."DocEntry" NOT IN (SELECT "BaseEntry" FROM PCH1 WHERE "BaseType" = 204)
+GROUP BY AdiantItem."ItemCode",
+	     Produto."ItemName",
+	     Adiantamento."DocDate",
+	     Adiantamento."Serial",
+	     Filial."BPLName",
+	     AdiantItem."BaseType",
+	     AdiantItem."BaseEntry",
+	     AdiantItem."UomCode") X
 ORDER BY Nome_Item

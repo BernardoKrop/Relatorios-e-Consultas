@@ -1,55 +1,48 @@
-SELECT 'NF - ' || CAST(fDfeImportada."KeyNfe" AS TEXT)                AS "Chave Importação",
-       'NF - ' || CAST(dDocumentos."U_ChaveAcesso" AS TEXT)           AS "Chave Documento",
+SELECT 'NF - ' || CAST(DFEImportada."KeyNfe" AS TEXT)                AS "Chave Importação",
+       'NF - ' || CAST(Documentos."U_ChaveAcesso" AS TEXT)           AS "Chave Documento",
        CASE 
-         WHEN fDfeImportada."StatusId" = 15 THEN 'Desconhecimento'
-         WHEN fDfeImportada."SefazId" = 101 THEN 'Cancelado(Sefaz)'
-         WHEN dDocumentos."U_ChaveAcesso" IS NULL then 'Pendente'
+         WHEN DFEImportada."StatusId" = 15 THEN 'Desconhecimento'
+         WHEN DFEImportada."SefazId" = 101 THEN 'Cancelado(Sefaz)'
+         WHEN Documentos."U_ChaveAcesso" IS NULL then 'Pendente'
          ELSE 'Lançado'
        END                                   AS "Status",
-       EXTRACT(MONTH FROM fDfeImportada."DateReceived")               AS "Mês",
+       EXTRACT(MONTH FROM DFEImportada."DateReceived")               AS "Mês",
        CASE 
-         WHEN fDfeImportada."CompanyId" = 1 THEN 'Matheu Garcia/Leonardo'
-         WHEN fDfeImportada."CompanyId" IN (4,9,7,8,19,6,5,10) THEN 'Joaquim/Eduardo'
-         WHEN fDfeImportada."CompanyId" IN (20,22,16,19) THEN 'Wilkson/Time Suprimentos'
-         WHEN fDfeImportada."CompanyId" = 18 THEN 'Lucas' 
-         WHEN fDfeImportada."CompanyId" = 21 THEN 'Geovana/Lucas'
+         WHEN DFEImportada."CompanyId" = 1 THEN 'Matheu Garcia/Leonardo'
+         WHEN DFEImportada."CompanyId" IN (4,9,7,8,19,6,5,10) THEN 'Joaquim/Eduardo'
+         WHEN DFEImportada."CompanyId" IN (20,22,16,19) THEN 'Wilkson/Time Suprimentos'
+         WHEN DFEImportada."CompanyId" = 18 THEN 'Lucas' 
+         WHEN DFEImportada."CompanyId" = 21 THEN 'Geovana/Lucas'
        END                                                            AS "Responsável",
-       dCompany."RazaoSocial"                						  AS "Empresa",
-       dModelo."NfmName"                                              AS "Modelo",
-       dOrigemImp."Description"                                       AS "Origem Importação",
-       dStatusDfe."Description"                                       AS "Situação Documento",
-       dSituacaoSefaz."Descricao"                                     AS "Retorno Sefaz",
-       fDfeImportada."Serial"                                         AS "Nota",
-       TO_DATE(fDfeImportada."DateReceived")                          AS "Data Documento",
-       fDfeImportada."CardCode"                                       AS "Código Parceiro",
-       fDfeImportada."TaxId"                         	              AS "CPF/CNPJ Parceiro",
-       'IE - '||fDfeImportada."IeParceiroXml"                         AS "I.E Parceiro Xml",
-       fDfeImportada."CardName"                                       AS "NomeParceiro",
-       dMunicipio."Name"                                              AS "Municipio",
-       dMunicipio."State"                                             AS "UF",
-       fDfeImportada."NatOp"                                          AS "Natureza Operação",
-       fDfeImportada."DocTotal"                                       AS "Total do Documento",
-       dUsuario."U_NAME"                                              AS "Usuário Lançamento"
-  FROM      "DocReceived" fDfeImportada
-  LEFT JOIN "DocReceivedStatus" dStatusDfe
-    ON fDfeImportada."StatusId" = dStatusDfe."ID"
-  LEFT JOIN "ImportSource" dOrigemImp
-    ON fDfeImportada."ImportSourceId" = dOrigemImp."ID"
-  LEFT JOIN "Entidade" dCompany
-    ON fDfeImportada."CompanyId" = dCompany."ID"
-  LEFT JOIN "CodigoSituacaoDaNfeNaSefaz" dSituacaoSefaz 
-    ON fDfeImportada."SefazId" = dSituacaoSefaz."cStat"
-  LEFT JOIN OCNT dMunicipio
-    ON fDfeImportada."IbgeCode" = dMunicipio."IbgeCode"
+       Empresa."RazaoSocial"                						  AS "Empresa",
+       Modelo."NfmName"                                              AS "Modelo",
+       OrigemImp."Description"                                       AS "Origem Importação",
+       StatusDFE."Description"                                       AS "Situação Documento",
+       SituacaoSefaz."Descricao"                                     AS "Retorno Sefaz",
+       DFEImportada."Serial"                                         AS "Nota",
+       TO_DATE(DFEImportada."DateReceived")                          AS "Data Documento",
+       DFEImportada."CardCode"                                       AS "Código Parceiro",
+       DFEImportada."TaxId"                         	              AS "CPF/CNPJ Parceiro",
+       'IE - '||DFEImportada."IeParceiroXml"                         AS "I.E Parceiro Xml",
+       DFEImportada."CardName"                                       AS "NomeParceiro",
+       Municipio."Name"                                              AS "Municipio",
+       Municipio."State"                                             AS "UF",
+       DFEImportada."NatOp"                                          AS "Natureza Operação",
+       DFEImportada."DocTotal"                                       AS "Total do Documento",
+       Usuario."U_NAME"                                              AS "Usuário Lançamento"
+  FROM      "DocReceived" DFEImportada 
+  LEFT JOIN "DocReceivedStatus" StatusDFE              ON DFEImportada."StatusId" = StatusDFE."ID"
+  LEFT JOIN "ImportSource" OrigemImp                   ON DFEImportada."ImportSourceId" = OrigemImp."ID"
+  LEFT JOIN "Entidade" Empresa                         ON DFEImportada."CompanyId" = Empresa."ID"
+  LEFT JOIN "CodigoSituacaoDaNfeNaSefaz" SituacaoSefaz ON DFEImportada."SefazId" = SituacaoSefaz."cStat"
+  LEFT JOIN OCNT Municipio                             ON DFEImportada."IbgeCode" = Municipio."IbgeCode"
   LEFT JOIN (SELECT "U_ChaveAcesso", "UserSign" FROM OPCH
                 UNION ALL
               SELECT "U_ChaveAcesso", "UserSign" FROM ORPC
                 UNION ALL
               SELECT "U_ChaveAcesso", "UserSign" FROM ODLN
                 UNION ALL 
-              SELECT "U_ChaveAcesso", "UserSign" FROM OPDN) dDocumentos
-    ON fDfeImportada."KeyNfe" = dDocumentos."U_ChaveAcesso"
-  LEFT JOIN OUSR dUsuario
-    ON dDocumentos."UserSign" = dUsuario."USERID"
-  LEFT JOIN ONFM dModelo
-    ON fDfeImportada."Modelo" = dModelo."NfmCode"
+              SELECT "U_ChaveAcesso", "UserSign" FROM OPDN) Documentos
+    ON DFEImportada."KeyNfe" = Documentos."U_ChaveAcesso"
+  LEFT JOIN OUSR Usuario ON Documentos."UserSign" = Usuario."USERID"
+  LEFT JOIN ONFM Modelo  ON DFEImportada."Modelo" = Modelo."NfmCode"
