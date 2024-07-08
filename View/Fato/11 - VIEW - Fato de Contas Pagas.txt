@@ -5,7 +5,7 @@
  CRIADO POR: 				01/07/2024 		BERNARDO S. KROPIWIEC
 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-CREATE VIEW "SBOTRUSTAGRO"."vw_fContaPaga" ( "Filial",
+ALTER VIEW "SBOTRUSTAGRO"."vw_fContaPaga" ( "Filial",
 	 "Fornecedor",
 	 "NumeroInterno",
 	 "Item",
@@ -27,16 +27,19 @@ SELECT
 /*========================== DESCRITIVO DAS CONTAS ==========================*/ 	
     ContaPaga."BPLId" AS "Filial" ,
 	CASE
-		WHEN ContaPagaItem."InvType" = '18' 	THEN NFEntrada."CardName"
-		WHEN ContaPagaItem."InvType" = '204'	THEN Adiantamento."CardName" 
+		WHEN ContaPagaItem."InvType" = '18' 	    THEN NFEntrada."CardName"
+		WHEN ContaPagaItem."InvType" = '204'	    THEN Adiantamento."CardName" 
+		WHEN ContaPagaItem."InvType" = '30' 	    THEN LivroRazaoItem."Ref1"
 	END AS "Fornecedor" ,    
 	CASE
+	    WHEN ContaPagaItem."InvType" = '30' 	    THEN LivroRazao."TransId"		-- Numero de Lançamento Contabil do Documento de Baixa
 		WHEN ContaPagaItem."InvType" = '18' 		THEN NFEntrada."DocNum" 	    -- Numero de Nota Fiscal
 		WHEN ContaPagaItem."InvType" = '204'		THEN Adiantamento."DocNum" 	-- Numero de Adiantamento
 	END AS "NumeroInterno" ,
     CASE
         WHEN ContaPagaItem."InvType" = '18'  		THEN NFEntradaItem."ItemCode"		
         WHEN ContaPagaItem."InvType" = '204' 		THEN AdiantamentoItem."ItemCode"
+        WHEN ContaPagaItem."InvType" = '30'  		THEN ContaPaga."CardCode"
     END AS "Item",
     (SELECT Grupo."ItmsGrpNam"
        FROM OITM AS Produto
@@ -44,11 +47,13 @@ SELECT
      WHERE Produto."ItemCode" = CASE 
                                   WHEN ContaPagaItem."InvType" = '18'  THEN NFEntradaItem."ItemCode"
                                   WHEN ContaPagaItem."InvType" = '204' THEN AdiantamentoItem."ItemCode"	
+                                  WHEN ContaPagaItem."InvType" = '30'  THEN ContaPaga."CardCode"
                                 END
      ) AS "GrupoItem",
     CASE
         WHEN ContaPagaItem."InvType" = '18'  		THEN 'NF' 						-- Nota Fiscal
         WHEN ContaPagaItem."InvType" = '204' 		THEN 'AD'						-- Adiantamento
+        WHEN ContaPagaItem."InvType" = '30'  	    THEN 'LC' 						-- Lançamento Contábil 
     END AS "DocTipo",    
     ContaPaga."DocNum" AS "DocBaixa"        ,								--Numero do documento de pagamento
 /*========================= VALOR DAS CONTAS ==========================*/ 	
@@ -57,15 +62,19 @@ SELECT
 														SUM ( NFEntradaItem."LineTotal" ) OVER ( PARTITION BY ContaPaga."DocNum" )
 			WHEN ContaPagaItem."InvType" = '204' 	THEN 	AdiantamentoItem."LineTotal" * ContaPaga."DocTotal" /
 														SUM ( AdiantamentoItem."LineTotal" ) OVER ( PARTITION BY ContaPaga."DocNum" )
+			WHEN ContaPagaItem."InvType" = '30'	    THEN 	( ContaPagaItem."SumApplied"- ContaPagaItem."WtAppld" + ( ContaPaga."UndOvDiff"/ COUNT (ContaPaga."UndOvDiff") OVER ( PARTITION BY ContaPaga."DocNum" ) ) ) / -- Retorna o valor realizado
+														COUNT (ContaPagaItem."SumApplied") OVER ( PARTITION BY ContaPaga."DocNum" , ContaPagaItem."SumApplied" )
 	END AS "RatRealizado" ,	
 /*========================== DATA DAS CONTAS ==========================*/ 
 	CASE
 	   WHEN ContaPagaItem."InvType" = '18'  		THEN CAST ( NFEntradaPrestacao."DueDate" AS DATE 	)
-	   WHEN ContaPagaItem."InvType" = '204' 		THEN CAST ( AdiantamentoPrestacao."DueDate" AS DATE 	)         
+	   WHEN ContaPagaItem."InvType" = '204' 		THEN CAST ( AdiantamentoPrestacao."DueDate" AS DATE 	)  
+	   WHEN ContaPagaItem."InvType" = '30'  		THEN CAST ( LivroRazao."DueDate" AS DATE 	)       
 	END AS "DtVencimento",
    CASE
        WHEN ContaPagaItem."InvType" = '18'  		THEN CAST ( NFEntrada."TaxDate" AS DATE 	)
        WHEN ContaPagaItem."InvType" = '204' 		THEN CAST ( Adiantamento."TaxDate" AS DATE 	)        
+       WHEN ContaPagaItem."InvType" = '30'  		THEN CAST ( LivroRazao."TaxDate" AS DATE 	)
    END AS "DtEmissao",
 	CASE
 		WHEN ContaPaga."TrsfrSum"	> 0 		THEN CAST ( ContaPaga."TrsfrDate" AS DATE 	) 	-- Pago via transferência bancária
@@ -93,20 +102,24 @@ SELECT
 		WHEN ContaPaga."BoeSum" 	> 0 		THEN 'Boleto'
 	END AS "TipoPagto" , 	
 	CASE
-	   WHEN ContaPagaItem."InvType" 	= '18'  	THEN NFEntradaItem."OcrCode"
-	   WHEN ContaPagaItem."InvType"	= '204' 	THEN AdiantamentoItem."OcrCode"         
+	   WHEN ContaPagaItem."InvType" 	= '18' 	THEN NFEntradaItem."OcrCode"
+	   WHEN ContaPagaItem."InvType"	    = '204' THEN AdiantamentoItem."OcrCode"     
+	   WHEN ContaPagaItem."InvType" 	= '30'  THEN LivroRazaoItem."ProfitCode"    
 	END AS "Localizacao",	
 	CASE
-	   WHEN ContaPagaItem."InvType" 	= '18'  	THEN NFEntradaItem."OcrCode2"
-	   WHEN ContaPagaItem."InvType" 	= '204' 	THEN AdiantamentoItem."OcrCode2"         
+	   WHEN ContaPagaItem."InvType" 	= '18' 	THEN NFEntradaItem."OcrCode2"
+	   WHEN ContaPagaItem."InvType" 	= '204'	THEN AdiantamentoItem."OcrCode2"   
+	   WHEN ContaPagaItem."InvType"     = '30' 	THEN LivroRazaoItem."OcrCode2"      
 	END AS "Departamento",
 	CASE
-	   WHEN ContaPagaItem."InvType" 	= '18'  	THEN NFEntradaItem."OcrCode3"
-	   WHEN ContaPagaItem."InvType" 	= '204' 	THEN AdiantamentoItem."OcrCode3"         
+	   WHEN ContaPagaItem."InvType" 	= '18' 	THEN NFEntradaItem."OcrCode3"
+	   WHEN ContaPagaItem."InvType" 	= '204'	THEN AdiantamentoItem."OcrCode3" 
+	   WHEN ContaPagaItem."InvType"    	= '30'  THEN LivroRazaoItem."OcrCode3"        
 	END AS "Natureza",
 	CASE
-	   WHEN ContaPagaItem."InvType" 	= '18'  	THEN NFEntradaItem."OcrCode4"
-	   WHEN ContaPagaItem."InvType" 	= '204' 	THEN AdiantamentoItem."OcrCode4"         
+	   WHEN ContaPagaItem."InvType" 	= '18' 	THEN NFEntradaItem."OcrCode4"
+	   WHEN ContaPagaItem."InvType" 	= '204'	THEN AdiantamentoItem."OcrCode4"     
+	   WHEN ContaPagaItem."InvType" 	= '30' 	THEN LivroRazaoItem."OcrCode4"    
 	END AS "Frota"
 	
 	FROM 
@@ -128,7 +141,13 @@ SELECT
 	LEFT JOIN DPO1 AS AdiantamentoItem		ON Adiantamento."DocEntry" 	= AdiantamentoItem."DocEntry"
 	LEFT JOIN DPO6 AS AdiantamentoPrestacao ON AdiantamentoPrestacao."DocEntry" = ContaPagaItem."baseAbs" 
 		AND AdiantamentoPrestacao."InstlmntID" 	= ContaPagaItem."InstId"
-	LEFT JOIN OBOE AS Boleto	    	    ON ContaPaga."BoeAbs" = Boleto."BoeKey"  
+	inner JOIN OJDT AS LivroRazao
+		ON	ContaPaga."TransId" 		= LivroRazao."TransId"
+--		AND ContaPaga."InvType"		= LivroRazao."ObjType" --Não parece ser necessário
+	LEFT JOIN JDT1 AS LivroRazaoItem
+		ON LivroRazao."TransId" 		= LivroRazaoItem."TransId"	
+	LEFT JOIN OBOE AS Boleto	    	    ON ContaPaga."BoeAbs" = Boleto."BoeKey" 
+	 
 
 WHERE 
 	ContaPaga."Canceled" = 'N'
@@ -197,6 +216,14 @@ GROUP BY
 	, NFEntradaItem."Dscription"
 	, AdiantamentoItem."Dscription" 
 	, ContaPaga."CardName"
+	, LivroRazaoItem."Ref1"
+	, LivroRazao."TransId"
+	, LivroRazao."DueDate"
+	, LivroRazao."TaxDate"
+	, LivroRazaoItem."ProfitCode"   
+	, LivroRazaoItem."OcrCode2" 
+	, LivroRazaoItem."OcrCode3" 
+	, LivroRazaoItem."OcrCode4" 
 ORDER BY
 	ContaPaga."BPLId" ASC
 	, "DocBaixa" ASC
