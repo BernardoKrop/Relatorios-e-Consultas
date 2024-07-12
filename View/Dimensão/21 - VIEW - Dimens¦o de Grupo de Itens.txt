@@ -24,10 +24,10 @@ SET SCHEMA SBOTRUSTAGRO;
 				,"Grupo_Nome"
 			) AS		
 				SELECT
-					"ItmsGrpCod"							AS "Grupo_Cod"
-					, "ItmsGrpNam"							AS "Grupo_Nome"
+					 GrupoItem."ItmsGrpCod"							AS "Grupo_Cod"
+					,GrupoItem."ItmsGrpNam"							AS "Grupo_Nome"
 					FROM 
-						OITB
+						OITB GrupoItem
 				UNION ALL
 				SELECT
 					'-1'									AS "Grupo_Cod" 

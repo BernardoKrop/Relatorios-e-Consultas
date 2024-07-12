@@ -12,7 +12,7 @@
 -- Iniciando a transação
 BEGIN TRANSACTION;
 SET SCHEMA SBOTRUSTAGRO;
-	CREATE VIEW "SBOTRUSTAGRO"."vw_dFazenda"
+	CREATE VIEW "SBOTRUSTAGRO"."vw_Fazenda"
 	(
 	Cod_Fazenda ,
 	Nome_Fazenda ,
@@ -21,15 +21,15 @@ SET SCHEMA SBOTRUSTAGRO;
 	Area_Talhao
 	) AS
 		SELECT
-			dFazenda."Code" 			AS Cod_Fazenda ,
-			INITCAP ( dFazenda."Name" ) AS Nome_Fazenda ,
-			dFazenda."U_CEP" 			AS Cep_Fazenda ,
-			dTalhao."Code" 				AS Cod_Talhao ,
-			dTalhao."U_QtdAreaPro" 		AS Area_Talhao
+			Fazenda."Code" 			AS Cod_Fazenda ,
+			INITCAP ( Fazenda."Name" ) AS Nome_Fazenda ,
+			Fazenda."U_CEP" 			AS Cep_Fazenda ,
+			Talhao."Code" 				AS Cod_Talhao ,
+			Talhao."U_QtdAreaPro" 		AS Area_Talhao
 			FROM 
-				"@AGRI_UNPF" AS dFazenda
-				LEFT JOIN "@AGRI_UNPT" AS dTalhao
-					ON dFazenda."Code" = dTalhao."U_CodUnPrFaz" ;
+				"@AGRI_UNPF" AS Fazenda
+				LEFT JOIN "@AGRI_UNPT" AS Talhao
+					ON Fazenda."Code" = Talhao."U_CodUnPrFaz" ;
 					
 -- Concluir a transação
  COMMIT ;

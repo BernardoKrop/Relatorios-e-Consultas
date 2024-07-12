@@ -46,41 +46,41 @@ SELECT
 	
 	FROM (
 	SELECT
-		dAutorizacao."DocEntry"								AS "Entrada_Cod"
-		, dAutorizacao."ObjType"							AS "Objeto_Tipo"
-		, dAutorizacao."OwnerID"							AS "Autor_Cod"
-		, dAutorizacao."Status"								AS "Estado" --W = Pendente, Y = Aprovado, C = Cancelado, N = Rejeitado, A = Gerado por autorizador, P = Gerado.
-		, INITCAP ( dAutorizacao."Remarks" )				AS "Observacao"
+		Autorizacao."DocEntry"								AS "Entrada_Cod"
+		, Autorizacao."ObjType"							AS "Objeto_Tipo"
+		, Autorizacao."OwnerID"							AS "Autor_Cod"
+		, Autorizacao."Status"								AS "Estado" --W = Pendente, Y = Aprovado, C = Cancelado, N = Rejeitado, A = Gerado por autorizador, P = Gerado.
+		, INITCAP ( Autorizacao."Remarks" )				AS "Observacao"
 		, TO_TIMESTAMP(
-		  	TO_VARCHAR(dAutorizacao."CreateDate", 'YYYYMMDD') || ' ' ||
-		    LPAD(TO_VARCHAR(dAutorizacao."CreateTime"), 4, '0'),
+		  	TO_VARCHAR(Autorizacao."CreateDate", 'YYYYMMDD') || ' ' ||
+		    LPAD(TO_VARCHAR(Autorizacao."CreateTime"), 4, '0'),
 		  'YYYYMMDD HH24MI') AS "Dt_Hrs_Criacao"
-		, fAutorizacao."Status"								AS "Resposta"
+		, AutorizacaoItem."Status"								AS "Resposta"
 		, TO_TIMESTAMP(
-	  		TO_VARCHAR(fAutorizacao."UpdateDate", 'YYYYMMDD') || ' ' ||
-	   		LPAD(TO_VARCHAR(fAutorizacao."UpdateTime"), 4, '0'),
+	  		TO_VARCHAR(AutorizacaoItem."UpdateDate", 'YYYYMMDD') || ' ' ||
+	   		LPAD(TO_VARCHAR(AutorizacaoItem."UpdateTime"), 4, '0'),
 	  	  'YYYYMMDD HH24MI') AS "Dt_Hrs_Resposta"
-		, fAutorizacao."Remarks"							AS "Observacao_Autorizador"
-		, INITCAP ( dPlanoAprovacao."Name" 	)				AS "Responsavel_Nome"
-		, INITCAP ( dUsuario."U_NAME"	   	)				AS "Usuario_Nome"
+		, AutorizacaoItem."Remarks"							AS "Observacao_Autorizador"
+		, INITCAP ( PlanoAprovacao."Name" 	)				AS "Responsavel_Nome"
+		, INITCAP ( Usuario."U_NAME"	   	)				AS "Usuario_Nome"
 		, CASE 
 				WHEN 
-					fAutorizacao."UpdateTime" IS NULL
-					AND fAutorizacao."Status" = 'W'	 
-					AND dAutorizacao."Status" <> 'C' THEN 1
+					AutorizacaoItem."UpdateTime" IS NULL
+					AND AutorizacaoItem."Status" = 'W'	 
+					AND Autorizacao."Status" <> 'C' THEN 1
 			ELSE 0
 		END AS "Flag_FalsoPendente" -- Útil para eliminar residuos indesejados da consulta, quando for usar em PBI, ou ainda no SQL.
 		
 		FROM 
-			OWDD			AS dAutorizacao
-		INNER JOIN WDD1		AS fAutorizacao
-			ON	dAutorizacao."WddCode" 	= fAutorizacao."WddCode"
-		LEFT JOIN OWST		AS dPlanoAprovacao
-			ON fAutorizacao."StepCode" 	= dPlanoAprovacao."WstCode"
-		LEFT JOIN OUSR		AS dUsuario
-			ON fAutorizacao."UserID"	= dUsuario."USERID"	
+			OWDD			AS Autorizacao
+		INNER JOIN WDD1		AS AutorizacaoItem
+			ON	Autorizacao."WddCode" 	= AutorizacaoItem."WddCode"
+		LEFT JOIN OWST		AS PlanoAprovacao
+			ON AutorizacaoItem."StepCode" 	= PlanoAprovacao."WstCode"
+		LEFT JOIN OUSR		AS Usuario
+			ON AutorizacaoItem."UserID"	= Usuario."USERID"	
 		WHERE
-			dAutorizacao."Status" <> 'C'
+			Autorizacao."Status" <> 'C'
 	)AS vw_fAprovacao
 	WHERE
 		vw_fAprovacao."Flag_FalsoPendente" = 0

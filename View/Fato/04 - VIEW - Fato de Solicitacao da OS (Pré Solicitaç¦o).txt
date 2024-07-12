@@ -16,7 +16,7 @@
 BEGIN TRANSACTION ;
 SET SCHEMA SBOTRUSTAGRO ;
 
-CREATE VIEW "SBOTRUSTAGRO"."vw_fAgroSolicitacao"
+CREATE VIEW "SBOTRUSTAGRO"."vw_AgroSolicitacao"
 	(
 	"Entrada_Cod"
 	, "Interno_Cod"
@@ -32,20 +32,20 @@ CREATE VIEW "SBOTRUSTAGRO"."vw_fAgroSolicitacao"
 /*++++++++++++++++++++++++++++++++CORPO DA CONSULTA++++++++++++++++++++++++++++++++*/
 
 SELECT
-	fAgroSolicitacao."DocEntry" 			AS "Entrada_Cod"
-	, dAgroOrdemServico."DocNum" 			AS "Interno_Cod"
-	, dAgroOrdemServico."U_DscFazenda"		AS "Fazenda_Nome" 
-	, dAgroOrdemServico."Creator"			AS "Criador" 
-	, dAgroOrdemServico."U_DtEntrada"		AS "Dt_OrdemServico"
-	, fAgroSolicitacao."U_StatusOperacao"	AS "StatusOperacao"		-- D - Diagnóstico | P - Aguardando Peça | S - Aguardando Serviço | E - Em Execução | F - Finalizado | N - Aguardando NF do Fornecedor
-	, dAgroOrdemServico."U_Status"			AS "Status"
-	, fAgroSolicitacao."U_CodItem"			AS "Item_Cod"
-	, dAgroOrdemServico."U_CodEquipam" 		AS "CCNatureza_Cod"
-	, fAgroSolicitacao."U_CodCompra"		AS "BaseEntradaSol_Cod"
+	AgroSolicitacao."DocEntry" 			AS "Entrada_Cod"
+	, AgroOrdemServico."DocNum" 			AS "Interno_Cod"
+	, AgroOrdemServico."U_DscFazenda"		AS "Fazenda_Nome" 
+	, AgroOrdemServico."Creator"			AS "Criador" 
+	, AgroOrdemServico."U_DtEntrada"		AS "Dt_OrdemServico"
+	, AgroSolicitacao."U_StatusOperacao"	AS "StatusOperacao"		-- D - Diagnóstico | P - Aguardando Peça | S - Aguardando Serviço | E - Em Execução | F - Finalizado | N - Aguardando NF do Fornecedor
+	, AgroOrdemServico."U_Status"			AS "Status"
+	, AgroSolicitacao."U_CodItem"			AS "Item_Cod"
+	, AgroOrdemServico."U_CodEquipam" 		AS "CCNatureza_Cod"
+	, AgroSolicitacao."U_CodCompra"		AS "BaseEntradaSol_Cod"
 	
 	FROM
-		"@AGRI_OSOF"				AS dAgroOrdemServico		
-		INNER JOIN	"@AGRI_OSOA"	AS fAgroSolicitacao
-			ON dAgroOrdemServico."DocEntry" = fAgroSolicitacao."DocEntry"
+		"@AGRI_OSOF"				AS AgroOrdemServico		
+		INNER JOIN	"@AGRI_OSOA"	AS AgroSolicitacao
+			ON AgroOrdemServico."DocEntry" = AgroSolicitacao."DocEntry"
 		WHERE
-			dAgroOrdemServico."U_Status" <> 'C'
+			AgroOrdemServico."U_Status" <> 'C'

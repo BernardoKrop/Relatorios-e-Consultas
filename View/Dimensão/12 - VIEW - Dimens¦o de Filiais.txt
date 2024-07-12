@@ -15,7 +15,7 @@ BEGIN TRANSACTION;
 SET SCHEMA SBOTRUSTAGRO;
 
 -- Criando uma visão para uso no Power BI
-	CREATE VIEW "SBOTRUSTAGRO"."vw_dFilial"
+	CREATE VIEW "SBOTRUSTAGRO"."vw_Filial"
 		(
 		"Cod_Filial" ,
 		"Nome_Filial" ,
@@ -23,11 +23,11 @@ SET SCHEMA SBOTRUSTAGRO;
 		"Cidade"
 		) AS
 			SELECT
-				dFilial."BPLId" AS "Cod_Filial" ,
-				INITCAP ( dFilial."BPLName" )  AS "Nome_Filial" ,
-				dFilial."State" AS "Estado" ,
-				INITCAP ( dFilial."City" ) AS "Cidade"
-			FROM OBPL AS dFilial ;
+				Filial."BPLId" AS "Cod_Filial" ,
+				INITCAP ( Filial."BPLName" )  AS "Nome_Filial" ,
+				Filial."State" AS "Estado" ,
+				INITCAP ( Filial."City" ) AS "Cidade"
+			FROM OBPL AS Filial ;
 -- Concluir a transação
 --COMMIT ;
 -- Caso algo dê errado, desfazer todas as operações da transação

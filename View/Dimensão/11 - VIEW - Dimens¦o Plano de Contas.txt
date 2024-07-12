@@ -16,7 +16,7 @@ BEGIN TRANSACTION;
 SET SCHEMA SBOTRUSTAGRO;
 
 -- Criando uma visão para uso no Power BI
-	CREATE VIEW "SBOTRUSTAGRO"."vw_dPlanoDeContas"
+	CREATE VIEW "SBOTRUSTAGRO"."vw_PlanoDeContas"
 		(
 		 "Conta_N1",
 		 "Nome_N1",
@@ -31,30 +31,30 @@ SET SCHEMA SBOTRUSTAGRO;
 		 "Orçamento"		
 		) AS
 			SELECT
-				 COALESCE ( dPlanoDeContas5."AcctCode" , 'null' ) AS "Conta_N1",
-				 COALESCE ( INITCAP ( dPlanoDeContas5."AcctName" ) , 'null' ) AS "Nome_N1",
-				 COALESCE ( dPlanoDeContas4."AcctCode" , 'null' ) AS "Conta_N2",
-				 COALESCE ( INITCAP ( dPlanoDeContas4."AcctName" ) , 'null' ) AS "Nome_N2",
-				 COALESCE ( dPlanoDeContas3."AcctCode" , 'null' ) AS "Conta_N3",
-				 COALESCE ( INITCAP ( dPlanoDeContas3."AcctName" ) , 'null' ) AS "Nome_N3",
-				 COALESCE ( dPlanoDeContas2."AcctCode" , 'null' ) AS "Conta N4",
-				 COALESCE ( INITCAP ( dPlanoDeContas2."AcctName" ) , 'null' ) AS "Nome_N4",
-				 COALESCE ( dPlanoDeContas."AcctCode" , 'null' )	AS "Conta_N5",
-				 COALESCE ( INITCAP ( dPlanoDeContas."AcctName" ) , 'null' ) AS "Nome_N5",
-				 dPlanoDeContas."Budget" AS "Orçamento"
-			FROM OACT AS dPlanoDeContas
+				 COALESCE ( PlanoDeContas5."AcctCode" , 'null' ) AS "Conta_N1",
+				 COALESCE ( INITCAP ( PlanoDeContas5."AcctName" ) , 'null' ) AS "Nome_N1",
+				 COALESCE ( PlanoDeContas4."AcctCode" , 'null' ) AS "Conta_N2",
+				 COALESCE ( INITCAP ( PlanoDeContas4."AcctName" ) , 'null' ) AS "Nome_N2",
+				 COALESCE ( PlanoDeContas3."AcctCode" , 'null' ) AS "Conta_N3",
+				 COALESCE ( INITCAP ( PlanoDeContas3."AcctName" ) , 'null' ) AS "Nome_N3",
+				 COALESCE ( PlanoDeContas2."AcctCode" , 'null' ) AS "Conta N4",
+				 COALESCE ( INITCAP ( PlanoDeContas2."AcctName" ) , 'null' ) AS "Nome_N4",
+				 COALESCE ( PlanoDeContas."AcctCode" , 'null' )	AS "Conta_N5",
+				 COALESCE ( INITCAP ( PlanoDeContas."AcctName" ) , 'null' ) AS "Nome_N5",
+				 PlanoDeContas."Budget" AS "Orçamento"
+			FROM OACT AS PlanoDeContas
 			    -- Unindo com a tabela de contas para obter detalhes do Nível 2
-			    LEFT JOIN OACT AS dPlanoDeContas2
-			        ON dPlanoDeContas."FatherNum" = dPlanoDeContas2."AcctCode"
+			    LEFT JOIN OACT AS PlanoDeContas2
+			        ON PlanoDeContas."FatherNum" = PlanoDeContas2."AcctCode"
 			    -- Unindo com a tabela de contas para obter detalhes do Nível 3
-			    LEFT JOIN OACT AS dPlanoDeContas3
-			        ON dPlanoDeContas2."FatherNum" = dPlanoDeContas3."AcctCode"
+			    LEFT JOIN OACT AS PlanoDeContas3
+			        ON PlanoDeContas2."FatherNum" = PlanoDeContas3."AcctCode"
 			    -- Unindo com a tabela de contas para obter detalhes do Nível 4
-			    LEFT JOIN OACT AS dPlanoDeContas4
-			        ON dPlanoDeContas3."FatherNum" = dPlanoDeContas4."AcctCode"
+			    LEFT JOIN OACT AS PlanoDeContas4
+			        ON PlanoDeContas3."FatherNum" = PlanoDeContas4."AcctCode"
 			    -- Unindo com a tabela de contas para obter detalhes do Nível 5
-			    LEFT JOIN OACT AS dPlanoDeContas5
-			        ON dPlanoDeContas4."FatherNum" = dPlanoDeContas5."AcctCode" ;
+			    LEFT JOIN OACT AS PlanoDeContas5
+			        ON PlanoDeContas4."FatherNum" = PlanoDeContas5."AcctCode" ;
 					
 -- Concluir a transação
 -- COMMIT ;

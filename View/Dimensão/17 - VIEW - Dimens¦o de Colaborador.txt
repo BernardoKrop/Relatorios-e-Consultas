@@ -18,7 +18,7 @@
 BEGIN TRANSACTION;
 SET SCHEMA SBOTRUSTAGRO;
 
-	ALTER VIEW "SBOTRUSTAGRO"."vw_dColaboradores"
+	ALTER VIEW "SBOTRUSTAGRO"."vw_Colaboradores"
 			(
 				Cod_Colaborador ,
 				Cod_Usuario ,
@@ -39,27 +39,27 @@ SET SCHEMA SBOTRUSTAGRO;
 				DepartCod
 			) AS		
 				SELECT
-					dColaborador."empID" 					AS Cod_Colaborador ,
-					dColaborador."userId"					AS Cod_Usuario ,
-					INITCAP ( TRIM ( dColaborador."firstName"  ) )		AS Nome_Inicial ,
-					INITCAP ( TRIM ( dColaborador."middleName" ) )		AS Nome_Meio ,
-					INITCAP ( TRIM ( dColaborador."lastName"   ) )		AS Nome_Fim ,
-					INITCAP ( TRIM ( dColaborador."firstName" ) || ' ' || COALESCE ( TRIM( dColaborador."middleName" ),'' ) || ' ' || TRIM ( dColaborador."lastName" ) ) AS "Nome_Inteiro" ,
-					dColaborador."sex" 						AS Sexo ,
-					INITCAP ( TRIM (  dColaborador."jobTitle" ) )	AS Funcao ,
-					dColaborador."CostCenter" 				AS CentroCusto ,
-					dColaborador."manager" 					AS Cod_Gerente ,
-					dGestor."firstName" 					AS Nome_Inicial_Gestor ,
-					INITCAP ( TRIM ( dGestor."firstName" ) || ' ' || COALESCE ( TRIM( dGestor."middleName" ),'' ) || ' ' || TRIM ( dGestor."lastName" ) ) AS Nome_Inteiro_Gestor ,
-					dColaborador."startDate" 				AS Dt_Ini ,
-					dColaborador."termDate"					AS Dt_Fim ,
-					dColaborador."birthDate"				AS Dt_Niver ,
-					dColaborador."BPLId" 					AS FilalCod ,
-					dColaborador."dept" 					AS DepartCod
+					Colaborador."empID" 					AS Cod_Colaborador ,
+					Colaborador."userId"					AS Cod_Usuario ,
+					INITCAP ( TRIM ( Colaborador."firstName"  ) )		AS Nome_Inicial ,
+					INITCAP ( TRIM ( Colaborador."middleName" ) )		AS Nome_Meio ,
+					INITCAP ( TRIM ( Colaborador."lastName"   ) )		AS Nome_Fim ,
+					INITCAP ( TRIM ( Colaborador."firstName" ) || ' ' || COALESCE ( TRIM( Colaborador."middleName" ),'' ) || ' ' || TRIM ( Colaborador."lastName" ) ) AS "Nome_Inteiro" ,
+					Colaborador."sex" 						AS Sexo ,
+					INITCAP ( TRIM (  Colaborador."jobTitle" ) )	AS Funcao ,
+					Colaborador."CostCenter" 				AS CentroCusto ,
+					Colaborador."manager" 					AS Cod_Gerente ,
+					Gestor."firstName" 					AS Nome_Inicial_Gestor ,
+					INITCAP ( TRIM ( Gestor."firstName" ) || ' ' || COALESCE ( TRIM( Gestor."middleName" ),'' ) || ' ' || TRIM ( Gestor."lastName" ) ) AS Nome_Inteiro_Gestor ,
+					Colaborador."startDate" 				AS Dt_Ini ,
+					Colaborador."termDate"					AS Dt_Fim ,
+					Colaborador."birthDate"				AS Dt_Niver ,
+					Colaborador."BPLId" 					AS FilalCod ,
+					Colaborador."dept" 					AS DepartCod
 					FROM 
-						OHEM 								AS dColaborador 
-						LEFT JOIN OHEM 						AS dGestor
-							ON dGestor."empID" = dColaborador."manager"
+						OHEM 								AS Colaborador 
+						LEFT JOIN OHEM 						AS Gestor
+							ON Gestor."empID" = Colaborador."manager"
 				UNION ALL
 				SELECT
 					'-1'									AS Cod_Colaborador 

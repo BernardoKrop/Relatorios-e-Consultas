@@ -32,19 +32,19 @@ SET SCHEMA SBOTRUSTAGRO ;
 			, "DescontoMax"
 			) AS		
 				SELECT 
-					"USERID"                    AS "Usuario_Cod"
-					, "USER_CODE"               AS "Usuario_varchar_Cod"  
-					, "U_NAME"                  AS "Usuario_Nome"               
-					, "SUPERUSER"               AS "SuperUsuario"   -- Y sim, N não
-					, "Department"              AS "Departamento_Cod"                    
-					, "lastLogin"               AS "Dt_UltimoLogin"      
-					, "MobileUser"              AS "Uso_Telefone"   -- Y sim, N não    
-					, "INTERNAL_K"              AS "Colaborador_Cod"      
-					, "Locked"                  AS "Bloqueado"  		-- N - No , Y - Yes (Usuário bloqueado)
-					, "DPPStatus"               AS "DPPStatus"      -- B=Blocked, D=Erased, N=None, U=Unblocked
-					, "DISCOUNT"                AS "DescontoMax"    -- Disconto máximo que o usuário pode fornecer
+					  Usuario."USERID"                    AS "Usuario_Cod"
+					, Usuario."USER_CODE"               AS "Usuario_varchar_Cod"  
+					, Usuario."U_NAME"                  AS "Usuario_Nome"               
+					, Usuario."SUPERUSER"               AS "SuperUsuario"   -- Y sim, N não
+					, Usuario."Department"              AS "Departamento_Cod"                    
+					, Usuario."lastLogin"               AS "Dt_UltimoLogin"      
+					, Usuario."MobileUser"              AS "Uso_Telefone"   -- Y sim, N não    
+					, Usuario."INTERNAL_K"              AS "Colaborador_Cod"      
+					, Usuario."Locked"                  AS "Bloqueado"  		-- N - No , Y - Yes (Usuário bloqueado)
+					, Usuario."DPPStatus"               AS "DPPStatus"      -- B=Blocked, D=Erased, N=None, U=Unblocked
+					, Usuario."DISCOUNT"                AS "DescontoMax"    -- Disconto máximo que o usuário pode fornecer
 					FROM 
-						OUSR
+						OUSR Usuario
 					ORDER BY
 					"USERID"  ASC ;
 

@@ -18,7 +18,7 @@
 BEGIN TRANSACTION;
 SET SCHEMA SBOTRUSTAGRO;
 
-	ALTER VIEW "SBOTRUSTAGRO"."vw_dItem"
+	ALTER VIEW "SBOTRUSTAGRO"."vw_Item"
 			(
 		    "Item_Cod"  
 		    , "Item_Nome"  
@@ -29,23 +29,23 @@ SET SCHEMA SBOTRUSTAGRO;
 		    , "Dt_Hrs_Atualizacao"  
 			) AS		
 				SELECT
-				    dItem."ItemCode"              AS "Item_Cod"  
-				    , dItem."ItemName"            AS "Item_Nome"  
-				    , dItem."ItmsGrpCod"          AS "Grupo_Cod"  
-				    , dItem."BuyUnitMsr"         	AS "UnidadeCompra"  
-				    , dItem."Canceled"            AS "Cancelado"    
-				    , TO_TIMESTAMP( TO_VARCHAR( dItem."CreateDate" ,
-			 			'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(dItem."CreateTS"),
+				    Item."ItemCode"              AS "Item_Cod"  
+				    , Item."ItemName"            AS "Item_Nome"  
+				    , Item."ItmsGrpCod"          AS "Grupo_Cod"  
+				    , Item."BuyUnitMsr"         	AS "UnidadeCompra"  
+				    , Item."Canceled"            AS "Cancelado"    
+				    , TO_TIMESTAMP( TO_VARCHAR( Item."CreateDate" ,
+			 			'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Item."CreateTS"),
 			 			6,
 			 			'0') ,
 			 			'YYYYMMDD HH24MISS') AS "Dt_Hrs_Criado"  
-				    , TO_TIMESTAMP( TO_VARCHAR( dItem."UpdateDate"  ,
-			 			'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(dItem."UpdateTS"),
+				    , TO_TIMESTAMP( TO_VARCHAR( Item."UpdateDate"  ,
+			 			'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Item."UpdateTS"),
 			 			6,
 			 			'0') ,
 			 			'YYYYMMDD HH24MISS') AS "Dt_Hrs_Atualizacao" 				    
 					FROM 
-						OITM				AS dItem
+						OITM				AS Item
 				UNION ALL
 				SELECT
 				    '-1'              		AS "Item_Cod"  

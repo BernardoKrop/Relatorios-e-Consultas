@@ -16,7 +16,7 @@ SET SCHEMA SBOTRUSTAGRO;
 
 
 -- Criando uma visão para uso no Power BI
-CREATE VIEW "SBOTRUSTAGRO"."vw_fdepreciacao" 
+CREATE VIEW "SBOTRUSTAGRO"."vw_Depreciacao" 
 ( 	 
 	 "Cod_Ativo",
 	 "Valor_Depreciacao",
@@ -24,12 +24,12 @@ CREATE VIEW "SBOTRUSTAGRO"."vw_fdepreciacao"
 	 "Dt_Inicio_Periodo" 
 ) AS
 SELECT
-    fDepreciacao."ItemCode" AS "Cod_Ativo",
-    fDepreciacao."OrdDprPlan" AS "Valor_Depreciacao",
-    fDepreciacao."SubPeriod" AS "Periodo_Mes",
-    fDepreciacao."FromDate" AS "Dt_Inicio_Periodo"
+    Depreciacao."ItemCode" AS "Cod_Ativo",
+    Depreciacao."OrdDprPlan" AS "Valor_Depreciacao",
+    Depreciacao."SubPeriod" AS "Periodo_Mes",
+    Depreciacao."FromDate" AS "Dt_Inicio_Periodo"
 FROM
-    "SBOTRUSTAGRO".ODPV AS fDepreciacao;
+    "SBOTRUSTAGRO".ODPV AS Depreciacao;
 
 -- Concluir a transação
 COMMIT;

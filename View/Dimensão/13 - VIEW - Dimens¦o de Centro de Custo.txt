@@ -16,17 +16,17 @@ BEGIN TRANSACTION;
 SET SCHEMA SBOTRUSTAGRO;
 
 -- Criando uma visão para uso no Power BI
-	CREATE VIEW "SBOTRUSTAGRO"."vw_dGrupo_Contas"
+	CREATE VIEW "SBOTRUSTAGRO"."vw_GrupoContas"
 	(
 	"Cod_Conta" ,
 	"Nome_Conta" ,
 	"Nivel_Conta"
 	) AS
 		SELECT
-			dGrupo_Contas."PrcCode" AS "Cod_Conta" ,
-			INITCAP ( dGrupo_Contas."PrcName" ) AS "Nome_Conta" ,
-			dGrupo_Contas."DimCode" AS "Nivel_Conta"
-		FROM OPRC AS dGrupo_Contas ;
+			GrupoContas."PrcCode" AS "Cod_Conta" ,
+			INITCAP ( GrupoContas."PrcName" ) AS "Nome_Conta" ,
+			GrupoContas."DimCode" AS "Nivel_Conta"
+		FROM OPRC AS GrupoContas ;
 
 -- Concluir a transação
 -- COMMIT ;

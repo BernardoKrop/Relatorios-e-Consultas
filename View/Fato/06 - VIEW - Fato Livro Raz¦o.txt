@@ -16,7 +16,7 @@ BEGIN TRANSACTION;
 SET SCHEMA SBOTRUSTAGRO;
 
 -- Criando uma visão para uso no Power BI
-	CREATE VIEW "SBOTRUSTAGRO"."vw_fLivroRazao"
+	CREATE VIEW "SBOTRUSTAGRO"."vw_LivroRazao"
 	(
 	"Cod_Tran",
 	"Linha_Razao" ,
@@ -39,29 +39,29 @@ SET SCHEMA SBOTRUSTAGRO;
 	) AS
 		SELECT
 			--Código único de transação
-			fLivroRazao."TransId" AS "Cod_Tran",
+			LivroRazao."TransId" AS "Cod_Tran",
 			-- Linha de transação
-			fLivroRazao."Line_ID" AS "Linha_Razao" ,
-			fLivroRazao."TaxDate" AS "Data_Cont" , --Item foi originalmente mascarado como "DueDate" devido nomenclatura ja estar presente na 
+			LivroRazao."Line_ID" AS "Linha_Razao" ,
+			LivroRazao."TaxDate" AS "Data_Cont" , --Item foi originalmente mascarado como "DueDate" devido nomenclatura ja estar presente na 
 			  									       -- estrutura do BI do Contábil do Castro.
-			fLivroRazao."DueDate" AS "Dt_Venc" ,
-			fLivroRazao."RefDate" AS "Dt_Sist" ,
-			fLivroRazao."Account" AS "Cod_Conta" ,
-			INITCAP ( dPlanoDeContas."AcctName" ) AS "Nome_Conta",
-			fLivroRazao."Debit" AS "Debito" ,
-			fLivroRazao."Credit" AS "Credito" ,
-			fLivroRazao."DebCred" AS "Bin_DebCred",
-			INITCAP ( fLivroRazao."LineMemo" ) AS "Desc_Conta",
-			fLivroRazao."BPLId" AS "Cod_Filial" ,
-			INITCAP ( fLivroRazao."BPLName" ) AS "Nome_Filial",
-			fLivroRazao."ProfitCode" as "Dimensao_1",
-			fLivroRazao."OcrCode2" as "Dimensao_2",
-			fLivroRazao."OcrCode3" as "Dimensao_3",
-			fLivroRazao."OcrCode4" as "Dimensao_4",
-			fLivroRazao."OcrCode5" AS "Dimensao_5" 
-		FROM "JDT1" fLivroRazao 
-			LEFT JOIN "OACT" dPlanoDeContas 
-				ON fLivroRazao."Account" = dPlanoDeContas."AcctCode" ;
+			LivroRazao."DueDate" AS "Dt_Venc" ,
+			LivroRazao."RefDate" AS "Dt_Sist" ,
+			LivroRazao."Account" AS "Cod_Conta" ,
+			INITCAP ( PlanoDeContas."AcctName" ) AS "Nome_Conta",
+			LivroRazao."Debit" AS "Debito" ,
+			LivroRazao."Credit" AS "Credito" ,
+			LivroRazao."DebCred" AS "Bin_DebCred",
+			INITCAP ( LivroRazao."LineMemo" ) AS "Desc_Conta",
+			LivroRazao."BPLId" AS "Cod_Filial" ,
+			INITCAP ( LivroRazao."BPLName" ) AS "Nome_Filial",
+			LivroRazao."ProfitCode" as "Dimensao_1",
+			LivroRazao."OcrCode2" as "Dimensao_2",
+			LivroRazao."OcrCode3" as "Dimensao_3",
+			LivroRazao."OcrCode4" as "Dimensao_4",
+			LivroRazao."OcrCode5" AS "Dimensao_5" 
+		FROM "JDT1" LivroRazao 
+			LEFT JOIN "OACT" PlanoDeContas 
+				ON LivroRazao."Account" = PlanoDeContas."AcctCode" ;
 		
 -- Concluir a transação
 --COMMIT ;

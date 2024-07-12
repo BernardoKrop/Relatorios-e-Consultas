@@ -24,16 +24,16 @@ SET SCHEMA SBOTRUSTAGRO;
 	Frota
 	) AS
 		SELECT
-			"Code" 				AS Cod_Equipamento ,
-			"U_AnoFabri" 		AS Ano_Fabricacao ,
-			"U_DscModelo" 		AS Modelo ,
-			"U_DscMarca" 		AS Marca ,
-			"U_CodCatOper" 		AS Cod_Funcao ,
-			"U_DscCatOper" 		AS Dsc_Funcao ,
-			"U_CodigoFazenda" 	AS Cod_Fazenda ,
-			"U_CodCenCust4"		AS Frota
+			EquipAgri."Code" 				AS Cod_Equipamento ,
+			EquipAgri."U_AnoFabri" 		AS Ano_Fabricacao ,
+			EquipAgri."U_DscModelo" 		AS Modelo ,
+			EquipAgri."U_DscMarca" 		AS Marca ,
+			EquipAgri."U_CodCatOper" 		AS Cod_Funcao ,
+			EquipAgri."U_DscCatOper" 		AS Dsc_Funcao ,
+			EquipAgri."U_CodigoFazenda" 	AS Cod_Fazenda ,
+			EquipAgri."U_CodCenCust4"		AS Frota
 			FROM
-				"@AGRI_EQPM" ;
+				"@AGRI_EQPM" EquipAgri;
 					
 -- Concluir a transação
  COMMIT ;

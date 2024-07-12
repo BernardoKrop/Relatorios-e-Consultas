@@ -16,7 +16,7 @@
 BEGIN TRANSACTION ;
 SET SCHEMA SBOTRUSTAGRO ;
 
-ALTER VIEW "SBOTRUSTAGRO"."vw_fAdiantamento"
+ALTER VIEW "SBOTRUSTAGRO"."vw_AdiantamentoItem"
 	(
 		"Entrada_Cod"
 		, "Objeto_Tipo"
@@ -42,74 +42,74 @@ ALTER VIEW "SBOTRUSTAGRO"."vw_fAdiantamento"
 	) AS 
 /*++++++++++++++++++++++++++++++++CORPO DA CONSULTA++++++++++++++++++++++++++++++++*/
 	SELECT 
-		dAdiantamento."DocEntry"												AS "Entrada_Cod"
-		, fAdiantamento."ObjType"												AS "Objeto_Tipo"
-		, dAdiantamento."DocNum"												AS "Interno_Cod"
-		, dAdiantamento."DocStatus"												AS "Status"
-		, COALESCE ( fAdiantamentoExtendido."MainUsage", '-1' )					AS "Utilidade_Cod" --Flag interna para indicar CFOP 
-		, COALESCE ( fAdiantamento."BaseEntry" , '-1' )							AS "BaseEntrada_Cod"
-		, fAdiantamento."BaseType"												AS "BaseObjeto_Tipo"
-		, COALESCE ( dAdiantamento."OwnerCode", '-1' )							AS "Titular_Cod"
-		, CAST 	( dAdiantamento."TaxDate" AS DATE )								AS "Dt_Emissao"   
-		, CAST 	( dAdiantamento."DocDueDate" AS DATE )							AS "Dt_Vencimento"
+		Adiantamento."DocEntry"												AS "Entrada_Cod"
+		, AdiantamentoItem."ObjType"												AS "Objeto_Tipo"
+		, Adiantamento."DocNum"												AS "Interno_Cod"
+		, Adiantamento."DocStatus"												AS "Status"
+		, COALESCE ( AdiantamentoItemExtendido."MainUsage", '-1' )					AS "Utilidade_Cod" --Flag interna para indicar CFOP 
+		, COALESCE ( AdiantamentoItem."BaseEntry" , '-1' )							AS "BaseEntrada_Cod"
+		, AdiantamentoItem."BaseType"												AS "BaseObjeto_Tipo"
+		, COALESCE ( Adiantamento."OwnerCode", '-1' )							AS "Titular_Cod"
+		, CAST 	( Adiantamento."TaxDate" AS DATE )								AS "Dt_Emissao"   
+		, CAST 	( Adiantamento."DocDueDate" AS DATE )							AS "Dt_Vencimento"
 		, TO_TIMESTAMP(
-	  		TO_VARCHAR(dAdiantamento."DocDate", 'YYYYMMDD') || ' ' ||
-	    	LPAD(TO_VARCHAR(dAdiantamento."DocTime"), 4, '0') ,
+	  		TO_VARCHAR(Adiantamento."DocDate", 'YYYYMMDD') || ' ' ||
+	    	LPAD(TO_VARCHAR(Adiantamento."DocTime"), 4, '0') ,
 	      'YYYYMMDD HH24MI') 													AS "Dt_Hrs_Lancamento"	
 	   	, TO_TIMESTAMP(
-			TO_VARCHAR(dAdiantamento."UpdateDate", 'YYYYMMDD') || ' ' ||
-	   		LPAD(TO_VARCHAR(dAdiantamento."UpdateTS"), 6, '0') ,
+			TO_VARCHAR(Adiantamento."UpdateDate", 'YYYYMMDD') || ' ' ||
+	   		LPAD(TO_VARCHAR(Adiantamento."UpdateTS"), 6, '0') ,
 	   	  'YYYYMMDD HH24MISS') 													AS "Dt_Hrs_Atualizacao"	      
-		, dAdiantamento."CardCode"												AS "Fornecedor_Cod"
-		, fAdiantamento."ItemCode"												AS "Item_Cod"
-		, fAdiantamento."Quantity"												AS "Volume_Total"
-		, fAdiantamento."Price"													AS "Preco"
-	 	, ( ( fAdiantamento."LineTotal" / CASE
-	 									 	WHEN ( SUM( fAdiantamento."LineTotal" ) OVER (PARTITION BY dAdiantamento."DocNum" ) ) = 0 
+		, Adiantamento."CardCode"												AS "Fornecedor_Cod"
+		, AdiantamentoItem."ItemCode"												AS "Item_Cod"
+		, AdiantamentoItem."Quantity"												AS "Volume_Total"
+		, AdiantamentoItem."Price"													AS "Preco"
+	 	, ( ( AdiantamentoItem."LineTotal" / CASE
+	 									 	WHEN ( SUM( AdiantamentoItem."LineTotal" ) OVER (PARTITION BY Adiantamento."DocNum" ) ) = 0 
 	 									 	THEN null
-	 									 	ELSE ( SUM( fAdiantamento."LineTotal" ) OVER (PARTITION BY dAdiantamento."DocNum" ) ) 
+	 									 	ELSE ( SUM( AdiantamentoItem."LineTotal" ) OVER (PARTITION BY Adiantamento."DocNum" ) ) 
 	 									 END ) *
-						COALESCE ( dAdiantamento."DiscSum" , 0 ) ) 				AS "Valor_DescontoRateio"
-		, dAdiantamento."BPLId"													AS "Filial"
-		, fAdiantamento."OcrCode"												AS "Unidade"
-		, fAdiantamento."OcrCode2"												AS "Departamento"
-		, dAdiantamento."Comments"												AS "Comentarios"
+						COALESCE ( Adiantamento."DiscSum" , 0 ) ) 				AS "Valor_DescontoRateio"
+		, Adiantamento."BPLId"													AS "Filial"
+		, AdiantamentoItem."OcrCode"												AS "Unidade"
+		, AdiantamentoItem."OcrCode2"												AS "Departamento"
+		, Adiantamento."Comments"												AS "Comentarios"
 
-		FROM ODPO										AS dAdiantamento
-		INNER JOIN 	DPO1								AS fAdiantamento
-			ON fAdiantamento."DocEntry"	=	dAdiantamento."DocEntry"
-		LEFT JOIN 	DPO12								AS fAdiantamentoExtendido -- Traz dados sobre 
-			ON dAdiantamento."DocEntry" =	fAdiantamentoExtendido."DocEntry"
+		FROM ODPO										AS Adiantamento
+		INNER JOIN 	DPO1								AS AdiantamentoItem
+			ON AdiantamentoItem."DocEntry"	=	Adiantamento."DocEntry"
+		LEFT JOIN 	DPO12								AS AdiantamentoItemExtendido -- Traz dados sobre 
+			ON Adiantamento."DocEntry" =	AdiantamentoItemExtendido."DocEntry"
 		-- Permite conectar com a OUSG que armazena os dados de CFOP
 		
 		WHERE
-			dAdiantamento."CANCELED" 	<> 'C'
+			Adiantamento."CANCELED" 	<> 'C'
 		GROUP BY
-			dAdiantamento."DocEntry"
-			, fAdiantamento."BaseEntry"
-			, dAdiantamento."DocNum"
-			, fAdiantamento."BaseType"
-			, dAdiantamento."DocStatus"
-			, fAdiantamento."ItemCode"
-			, fAdiantamento."ObjType"
-			, fAdiantamento."Quantity"
-			, fAdiantamento."Price"
-			, fAdiantamento."LineTotal"
-			, dAdiantamento."DiscSum"
-			, dAdiantamento."OwnerCode"
-			, dAdiantamento."UpdateTS"
-			, dAdiantamento."UpdateDate"
-			, dAdiantamento."DocTime"
-			, dAdiantamento."TaxDate"
-			, dAdiantamento."DocDueDate"
-			, dAdiantamento."DocDate"
-			, dAdiantamento."CardCode"
-			, dAdiantamento."BPLId"
-			, fAdiantamento."OcrCode"
-			, fAdiantamento."OcrCode2"
-			, dAdiantamento."Comments"
-			, fAdiantamentoExtendido."MainUsage"
+			Adiantamento."DocEntry"
+			, AdiantamentoItem."BaseEntry"
+			, Adiantamento."DocNum"
+			, AdiantamentoItem."BaseType"
+			, Adiantamento."DocStatus"
+			, AdiantamentoItem."ItemCode"
+			, AdiantamentoItem."ObjType"
+			, AdiantamentoItem."Quantity"
+			, AdiantamentoItem."Price"
+			, AdiantamentoItem."LineTotal"
+			, Adiantamento."DiscSum"
+			, Adiantamento."OwnerCode"
+			, Adiantamento."UpdateTS"
+			, Adiantamento."UpdateDate"
+			, Adiantamento."DocTime"
+			, Adiantamento."TaxDate"
+			, Adiantamento."DocDueDate"
+			, Adiantamento."DocDate"
+			, Adiantamento."CardCode"
+			, Adiantamento."BPLId"
+			, AdiantamentoItem."OcrCode"
+			, AdiantamentoItem."OcrCode2"
+			, Adiantamento."Comments"
+			, AdiantamentoItemExtendido."MainUsage"
 		
 		ORDER BY
-			dAdiantamento."DocNum" DESC
+			Adiantamento."DocNum" DESC
 		

@@ -17,7 +17,7 @@
 BEGIN TRANSACTION;
 SET SCHEMA SBOTRUSTAGRO;
 
-ALTER VIEW "SBOTRUSTAGRO"."vw_fSolicitacao" (
+ALTER VIEW "SBOTRUSTAGRO"."vw_SolicitacaoItem" (
 	 "Entrada_Cod",
 	 "Objeto_Tipo",
 	 "Interno_Cod",
@@ -38,39 +38,39 @@ ALTER VIEW "SBOTRUSTAGRO"."vw_fSolicitacao" (
 	 "Solicitacao_Tipo" ,
 	 "Solicitante_Cod" 
 	 ) AS SELECT
-			 dSolicitacao."DocEntry" AS "Entrada_Cod" ,
-			 dSolicitacao."ObjType" AS "Objeto_Tipo" ,
-			 dSolicitacao."DocNum" AS "Interno_Cod" ,
-			 COALESCE ( fSolicitacaoExtendida."MainUsage",
+			 Solicitacao."DocEntry" AS "Entrada_Cod" ,
+			 Solicitacao."ObjType" AS "Objeto_Tipo" ,
+			 Solicitacao."DocNum" AS "Interno_Cod" ,
+			 COALESCE ( SolicitacaoItemExtendida."MainUsage",
 			 '-1' ) AS "Utilidade_Cod" --Flag interna para indicar CFOP
 		 ,
-			 dSolicitacao."DocStatus" AS "Status" ,
-			 dSolicitacao."ReqName" AS "Solicitante" ,
-			 TO_TIMESTAMP( TO_VARCHAR(dSolicitacao."DocDate",
-			 'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(dSolicitacao."DocTime"),
+			 Solicitacao."DocStatus" AS "Status" ,
+			 Solicitacao."ReqName" AS "Solicitante" ,
+			 TO_TIMESTAMP( TO_VARCHAR(Solicitacao."DocDate",
+			 'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Solicitacao."DocTime"),
 			 4,
 			 '0') ,
 			 'YYYYMMDD HH24MI') AS "Dt_Hrs_Lancamento" ,
-			 CAST ( dSolicitacao."DocDueDate" AS DATE ) AS "Dt_Vencimento" ,
-			 TO_TIMESTAMP( TO_VARCHAR(dSolicitacao."UpdateDate",
-			 'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(dSolicitacao."UpdateTS"),
+			 CAST ( Solicitacao."DocDueDate" AS DATE ) AS "Dt_Vencimento" ,
+			 TO_TIMESTAMP( TO_VARCHAR(Solicitacao."UpdateDate",
+			 'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Solicitacao."UpdateTS"),
 			 6,
 			 '0') ,
 			 'YYYYMMDD HH24MISS') AS "Dt_Hrs_Atualizacao" ,
-			 CAST ( dSolicitacao."ReqDate" AS DATE ) AS "Dt_Necessaria" ,
-			 fSolicitacao."ItemCode" AS "Item_Cod" ,
-			 fSolicitacao."Quantity" AS  "Quantidade" ,
-			 COALESCE ( dSolicitacao."OwnerCode",
+			 CAST ( Solicitacao."ReqDate" AS DATE ) AS "Dt_Necessaria" ,
+			 SolicitacaoItem."ItemCode" AS "Item_Cod" ,
+			 SolicitacaoItem."Quantity" AS  "Quantidade" ,
+			 COALESCE ( Solicitacao."OwnerCode",
 			 '-1' ) AS "Titular_Cod" ,
-			 COALESCE ( dSolicitacao."BPLId" ,
+			 COALESCE ( Solicitacao."BPLId" ,
 			 '-1' ) AS "Filial_Cod" ,
-			 COALESCE ( fSolicitacao."OcrCode" ,
+			 COALESCE ( SolicitacaoItem."OcrCode" ,
 			 'ND' ) AS "Unidade" ,
-			 COALESCE ( fSolicitacao."OcrCode2" ,
+			 COALESCE ( SolicitacaoItem."OcrCode2" ,
 			 'ND' ) AS "Departamento" ,
-			 dSolicitacao."Comments" AS "Comentarios" ,
-			 dSolicitacao."U_TR_TipSol" AS "Solicitacao_Tipo" ,  --Reg Regularização Normal - Compra
-			 dSolicitacao."UserSign"	AS "Solicitante_Cod" -- Conecta-se ao OHEM "userId"
+			 Solicitacao."Comments" AS "Comentarios" ,
+			 Solicitacao."U_TR_TipSol" AS "Solicitacao_Tipo" ,  --Reg Regularização Normal - Compra
+			 Solicitacao."UserSign"	AS "Solicitante_Cod" -- Conecta-se ao OHEM "userId"
 		FROM ( -- visa excluir casos onde o Pedido foi cancelado, e não tera sequência a solicitação, mas a mesma foi somente encerrada (c = concluido)
 		 SELECT
 			 OPRQ.* 
@@ -79,33 +79,33 @@ ALTER VIEW "SBOTRUSTAGRO"."vw_fSolicitacao" (
 			AND OPRQ."ObjType" = POR1."BaseType" 
 			LEFT JOIN OPOR ON POR1."DocEntry" = OPOR."DocEntry" 
 			WHERE OPRQ."CANCELED" = 'N' 
-			OR OPOR."CANCELED" = 'N' ) AS dSolicitacao 
-		INNER JOIN PRQ1 AS fSolicitacao ON dSolicitacao."DocEntry" = fSolicitacao."DocEntry" 
-		INNER JOIN PRQ12 AS fSolicitacaoExtendida -- Traz dados sobre taxas parametrizadas.
-		 ON dSolicitacao."DocEntry" = fSolicitacaoExtendida."DocEntry" -- Permite conectar com a OUSG que armazena os dados de CFOP
+			OR OPOR."CANCELED" = 'N' ) AS Solicitacao 
+		INNER JOIN PRQ1 AS SolicitacaoItem ON Solicitacao."DocEntry" = SolicitacaoItem."DocEntry" 
+		INNER JOIN PRQ12 AS SolicitacaoItemExtendida -- Traz dados sobre taxas parametrizadas.
+		 ON Solicitacao."DocEntry" = SolicitacaoItemExtendida."DocEntry" -- Permite conectar com a OUSG que armazena os dados de CFOP
 		
-		GROUP BY dSolicitacao."DocNum" ,
-			 dSolicitacao."DocDate" ,
-			 fSolicitacao."ItemCode" ,
-			 dSolicitacao."ReqDate" ,
-			 dSolicitacao."ReqName" ,
-			 dSolicitacao."OwnerCode" ,
-			 dSolicitacao."DocStatus" ,
-			 dSolicitacao."BPLId" ,
-			 fSolicitacao."OcrCode" ,
-			 fSolicitacao."OcrCode2" ,
-			 dSolicitacao."Comments" ,
-			 fSolicitacaoExtendida."MainUsage" ,
-			 dSolicitacao."UpdateDate" ,
-			 dSolicitacao."DocEntry" ,
-			 dSolicitacao."ObjType" ,
-			 dSolicitacao."DocDueDate" ,
-			 dSolicitacao."DocTime" ,
-			 dSolicitacao."UpdateTS" ,
-			 dSolicitacao."UserSign" ,
-			 fSolicitacao."Quantity"  ,
-			 dSolicitacao."U_TR_TipSol"
-		ORDER BY dSolicitacao."DocNum" ;
+		GROUP BY Solicitacao."DocNum" ,
+			 Solicitacao."DocDate" ,
+			 SolicitacaoItem."ItemCode" ,
+			 Solicitacao."ReqDate" ,
+			 Solicitacao."ReqName" ,
+			 Solicitacao."OwnerCode" ,
+			 Solicitacao."DocStatus" ,
+			 Solicitacao."BPLId" ,
+			 SolicitacaoItem."OcrCode" ,
+			 SolicitacaoItem."OcrCode2" ,
+			 Solicitacao."Comments" ,
+			 SolicitacaoItemExtendida."MainUsage" ,
+			 Solicitacao."UpdateDate" ,
+			 Solicitacao."DocEntry" ,
+			 Solicitacao."ObjType" ,
+			 Solicitacao."DocDueDate" ,
+			 Solicitacao."DocTime" ,
+			 Solicitacao."UpdateTS" ,
+			 Solicitacao."UserSign" ,
+			 SolicitacaoItem."Quantity"  ,
+			 Solicitacao."U_TR_TipSol"
+		ORDER BY Solicitacao."DocNum" ;
 
 -- Concluir a transação
 	 COMMIT;
