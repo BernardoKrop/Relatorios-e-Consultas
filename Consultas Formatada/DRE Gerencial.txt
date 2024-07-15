@@ -1,0 +1,65 @@
+SELECT
+	LivroRazaoItem."TransId"                             AS "Cod Tran",
+	LivroRazaoItem."BPLId"            					 AS "Cod Filial" ,
+	INITCAP(LivroRazaoItem."BPLName") 					 AS "Nome Filial",
+	TO_DATE(LivroRazaoItem."TaxDate") 				 	 AS "Dt Emissão" , 
+	TO_DATE(LivroRazaoItem."DueDate")                    AS "Dt Vencimento" ,
+	TO_DATE(LivroRazaoItem."RefDate")                    AS "Dt Lançamento" ,
+	COALESCE(Origem."AcctCode",LivroRazaoItem."Account") AS "Cod Conta",
+	INITCAP(Conta."AcctName") 							 AS "Desc Conta" ,
+	COALESCE(Origem."TipoOrigem",'LC Manual') 			 AS "Tipo Origem",
+	Origem."DocNum"                                      AS "Nr Origem",
+	Origem."ItemCode"                                    AS "Cod Item",
+	Produto."ItemName"                                   AS "Desc Item",
+	CASE 
+	  WHEN Origem."DocEntry" IS NOT NULL THEN
+	    (Origem."LineTotal" / SUM(Origem."LineTotal") 
+	       OVER (PARTITION BY Origem."DocEntry",LivroRazaoItem."Line_ID")) * LivroRazaoItem."Debit"
+	  ELSE LivroRazaoItem."Debit"
+	END                                   AS "Debito",
+	CASE 
+	  WHEN Origem."DocEntry" IS NOT NULL THEN
+	    (Origem."LineTotal" / SUM(Origem."LineTotal") 
+	       OVER (PARTITION BY Origem."DocEntry",LivroRazaoItem."Line_ID")) * LivroRazaoItem."Credit"
+	  ELSE LivroRazaoItem."Credit"
+	END                                   AS "Credito", 
+	LivroRazaoItem."DebCred"                                AS "Deb/Cred",
+	INITCAP ( LivroRazaoItem."LineMemo" )                   AS "Desc Lançamento",
+	COALESCE(ORIGEM."OcrCode", LivroRazaoItem."ProfitCode") AS "Cod Localizacao",
+	CCLocal."OcrName"                                       AS "Desc Localizacao",
+	COALESCE(ORIGEM."OcrCode2",LivroRazaoItem."OcrCode2")   AS "Cod Departamento" ,
+	CCDepto."OcrName"   						    		AS "Desc Departamento" ,
+	COALESCE(ORIGEM."OcrCode3",LivroRazaoItem."OcrCode3")   AS "Cod Natureza",
+	CCNatureza."OcrName" 									AS "Desc Natureza",
+	COALESCE(ORIGEM."OcrCode4",LivroRazaoItem."OcrCode4")   AS "Cod Frota",
+	CCFrota."OcrName"    									AS "Desc Frota", 
+	Origem."Comments"                                       AS "Obsrv Origem",
+	Usuario."U_NAME"                                        AS "Usuario Lançamento"
+FROM       OJDT LivroRazao
+INNER JOIN JDT1 LivroRazaoItem 
+  ON LivroRazao."TransId" = LivroRazaoItem."TransId"
+LEFT JOIN vw_fOrigensLR Origem
+  ON  LivroRazao."TransId"   = Origem."TransId"
+  AND LivroRazao."TransType" = Origem."ObjType"
+LEFT JOIN OITM Produto
+  ON Origem."ItemCode" = Produto."ItemCode" 
+LEFT JOIN OACT Conta 
+  ON COALESCE(Origem."AcctCode",LivroRazaoItem."Account") = Conta."AcctCode" 
+LEFT JOIN OUSR Usuario
+  ON LivroRazao."UserSign" = Usuario.USERID 
+LEFT JOIN OOCR CCLocal
+  ON COALESCE(ORIGEM."OcrCode",LivroRazaoItem."ProfitCode") = CCLocal."OcrCode" 
+LEFT JOIN OOCR CCDepto
+  ON COALESCE(ORIGEM."OcrCode2",LivroRazaoItem."OcrCode2")  = CCDepto."OcrCode" 
+LEFT JOIN OOCR CCNatureza
+  ON COALESCE(ORIGEM."OcrCode3",LivroRazaoItem."OcrCode3")  = CCNatureza."OcrCode" 
+LEFT JOIN OOCR CCFrota
+  ON COALESCE(ORIGEM."OcrCode4",LivroRazaoItem."OcrCode4")  = CCFrota."OcrCode" 
+WHERE (Origem."CANCELED" IS NULL OR
+       Origem."CANCELED" = 'N')
+AND LivroRazao."TransType" IN (13,14,15,18,19,203,204,59,60,30)
+AND (LivroRazao."TransId" = 30 OR
+     Origem."TransId" IS NOT NULL)
+
+AND (LivroRazao."RefDate" >=  [%0] or '[%0]' = '')  
+AND (LivroRazao."RefDate" <=  [%1] or '[%1]' = '')
