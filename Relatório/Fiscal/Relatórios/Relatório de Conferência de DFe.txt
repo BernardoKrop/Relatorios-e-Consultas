@@ -11,7 +11,7 @@ SELECT 'NF - ' || CAST(DFEImportada."KeyNfe" AS TEXT)                AS "Chave I
          WHEN DFEImportada."CompanyId" = 1 THEN 'Matheu Garcia/Leonardo'
          WHEN DFEImportada."CompanyId" IN (4,9,7,8,19,6,5,10) THEN 'Joaquim/Eduardo'
          WHEN DFEImportada."CompanyId" IN (20,22,16,19) THEN 'Wilkson/Time Suprimentos'
-         WHEN DFEImportada."CompanyId" = 18 THEN 'Lucas' 
+         WHEN DFEImportada."CompanyId" = 18 THEN 'Waudumir' 
          WHEN DFEImportada."CompanyId" = 21 THEN 'Geovana/Lucas'
        END                                                            AS "Responsável",
        Empresa."RazaoSocial"                						  AS "Empresa",
