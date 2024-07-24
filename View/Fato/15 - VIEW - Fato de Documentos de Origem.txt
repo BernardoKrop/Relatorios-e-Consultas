@@ -1,0 +1,157 @@
+CREATE OR REPLACE VIEW "vw_fDocsOrigem"("TransId",
+					      "ObjType",
+					      "DocEntry",
+					      "DocNum",
+					      "CardCode",
+					      "CardName",
+					      "DocStatus",
+					      "TipoOrigem",
+					      "Comments",
+					      "CANCELED",
+					      "U_ChaveAcesso",
+					      "UserSign") as
+------------------------Saídas--------------------------------
+SELECT NFSaida."TransId",
+       NFSaida."ObjType",
+       NFSaida."DocEntry",
+       NFSaida."DocNum",
+       NFSaida."CardCode",
+       NFSaida."CardName",
+       NFSaida."DocStatus",
+       'NF Saída' AS "TipoOrigem",
+       NFSaida."Comments",
+       NFSaida."CANCELED",
+       NFSaida."U_ChaveAcesso",   --Nota de Saída
+       NFSaida."UserSign"
+  FROM OINV NFSaida
+  
+	UNION ALL
+
+SELECT ADCliente."TransId",
+       ADCliente."ObjType",
+       ADCliente."DocEntry",
+       ADCliente."DocNum",
+       ADCliente."CardCode",
+       ADCliente."CardName",
+       ADCliente."DocStatus",
+       'AD Cli' AS "TipoOrigem",
+       ADCliente."Comments",
+       ADCliente."CANCELED",
+       ADCliente."U_ChaveAcesso", --Adiantamento de cleinte
+       ADCliente."UserSign"
+  FROM ODPI ADCliente 
+  
+	UNION ALL
+
+SELECT DevNFSaida."TransId",
+       DevNFSaida."ObjType",
+       DevNFSaida."DocEntry",
+       DevNFSaida."DocNum",
+       DevNFSaida."CardCode",
+       DevNFSaida."CardName",
+       DevNFSaida."DocStatus",
+       'Dev Saída' AS "TipoOrigem",
+       DevNFSaida."Comments",
+       DevNFSaida."CANCELED",
+       DevNFSaida."U_ChaveAcesso",
+       DevNFSaida."UserSign"
+  FROM ORIN DevNFSaida
+
+	UNION ALL
+
+SELECT EntregaMerc."TransId",
+       EntregaMerc."ObjType",
+       EntregaMerc."DocEntry",
+       EntregaMerc."DocNum",
+       EntregaMerc."CardCode",
+       EntregaMerc."CardName",
+       EntregaMerc."DocStatus",
+       'Entrega' AS "TipoOrigem",
+       EntregaMerc."Comments",
+       EntregaMerc."CANCELED",
+       EntregaMerc."U_ChaveAcesso",           --Entrega de mercadoria
+       EntregaMerc."UserSign"
+  FROM ODLN EntregaMerc
+    
+	UNION ALL 
+
+SELECT SaidaMerc."TransId",
+       SaidaMerc."ObjType",
+       SaidaMerc."DocEntry",
+       SaidaMerc."DocNum",
+       SaidaMerc."CardCode",
+       SaidaMerc."CardName",
+       SaidaMerc."DocStatus",
+       'Saída Merc' AS "TipoOrigem",
+       SaidaMerc."Comments",
+       SaidaMerc."CANCELED",
+       SaidaMerc."U_ChaveAcesso",
+       SaidaMerc."UserSign"
+  FROM OIGE SaidaMerc
+  
+	UNION ALL
+------------------------Entradas-----------------------------------
+SELECT NFEntrada."TransId",
+       NFEntrada."ObjType",
+       NFEntrada."DocEntry",
+       NFEntrada."DocNum",
+       NFEntrada."CardCode",
+       NFEntrada."CardName",
+       NFEntrada."DocStatus",
+       'NF Entrada' AS "TipoOrigem",
+       NFEntrada."Comments",
+       NFEntrada."CANCELED",
+       NFEntrada."U_ChaveAcesso",
+       NFEntrada."UserSign"
+  FROM OPCH NFEntrada
+    
+	UNION ALL
+
+SELECT ADFornecedor."TransId",
+       ADFornecedor."ObjType",
+       ADFornecedor."DocEntry",
+       ADFornecedor."DocNum",
+       ADFornecedor."CardCode",
+       ADFornecedor."CardName",
+       ADFornecedor."DocStatus",
+       'AD For' AS "TipoOrigem",
+       ADFornecedor."Comments",
+       ADFornecedor."CANCELED",
+       ADFornecedor."U_ChaveAcesso",             --Adiantamento de Fornecedor
+       ADFornecedor."UserSign"
+  FROM ODPO ADFornecedor
+
+    
+	UNION ALL 
+
+SELECT DevNFEntrada."TransId",
+       DevNFEntrada."ObjType",
+       DevNFEntrada."DocEntry",
+       DevNFEntrada."DocNum",
+       DevNFEntrada."CardCode",
+       DevNFEntrada."CardName",
+       DevNFEntrada."DocStatus",
+       'Dev Entrada' AS "TipoOrigem",
+       DevNFEntrada."Comments",
+       DevNFEntrada."CANCELED",
+       DevNFEntrada."U_ChaveAcesso",
+       DevNFEntrada."UserSign"
+  FROM ORPC DevNFEntrada
+ 
+	UNION ALL
+
+SELECT EntradaMerc."TransId",
+       EntradaMerc."ObjType",
+       EntradaMerc."DocEntry",
+       EntradaMerc."DocNum",
+       EntradaMerc."CardCode",
+       EntradaMerc."CardName",
+       EntradaMerc."DocStatus",
+       'Entrada Merc' AS "TipoOrigem",
+       EntradaMerc."Comments",
+       EntradaMerc."CANCELED",
+       EntradaMerc."U_ChaveAcesso",
+       EntradaMerc."UserSign"
+  FROM OIGN EntradaMerc
+
+

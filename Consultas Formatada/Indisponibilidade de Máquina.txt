@@ -1,0 +1,26 @@
+SELECT Ordem."DocEntry"         AS "Nr OS",
+       INITCAP(Ordem."U_DscFazenda") AS "Fazenda",
+       INITCAP(Ordem."U_DscMotivo")  AS "Motivo",  
+       INITCAP(Ordem."U_DscClassMa") AS "Classe",
+       CASE Ordem."U_Status"
+         WHEN 'E' THEN 'Encerrada'
+         WHEN 'A' THEN 'Aberta'
+       END AS "Status",
+	   CASE "U_Avanco" 
+	   	 WHEN 'D' THEN 'Em Análise'
+	   	 WHEN 'P' THEN 'Aguardando Peça'
+	   	 WHEN 'S' THEN 'Aguardando Serviço'
+	   	 WHEN 'E' THEN 'Em Execução'
+	   	 WHEN 'F' THEN 'Finalizada'
+	   	 WHEN 'N' THEN 'Aguardando NF do Forncedor'
+	   END "Avanço",
+       INITCAP(Equipamento."U_DscModelo")     AS "Equipamento",
+       CASE WHEN Ordem."U_DtSaida" IS NOT NULL 
+         THEN ROUND(SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE(Ordem."U_DtEntrada")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEntrada")),
+                              TO_TIMESTAMP(TO_DATE(Ordem."U_DtSaida")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEncerramento" ))) / 60/60,2)
+         ELSE ROUND(SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE(Ordem."U_DtEntrada")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEntrada")),
+                              CURRENT_TIMESTAMP) / 60 /60,2)
+       END AS "Tmp Decorrido [Hrs]"
+  FROM      "@AGRI_OSOF" Ordem
+  LEFT JOIN "@AGRI_EQPM" Equipamento ON Ordem."U_CodEquipam" = Equipamento."Code"
+WHERE Ordem."Canceled"  = 'N';

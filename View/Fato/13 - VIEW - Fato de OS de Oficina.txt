@@ -1,0 +1,33 @@
+CREATE OR REPLACE VIEW "vw_fOSOficina" ("Nr OS",
+							 "IdFazenda",
+							 "IdMotivo",
+							 "IdClasse",
+							 "Status",
+							 "Avanço",
+							 "IdEquipamento",
+							 "Tmp Decorrido") AS 
+SELECT Ordem."DocEntry"         AS "Nr OS",
+       Ordem."U_CodFazenda"     AS "IdFazenda",
+       Ordem."U_CodMotivo"      AS "IdMotivo",  
+       Ordem."U_CodClassMa"     AS "IdClasse",
+       CASE "U_Status"
+         WHEN 'E' THEN 'Encerrada'
+         WHEN 'A' THEN 'Aberta'
+       END AS "Status",
+	   CASE "U_Avanco" 
+	   	 WHEN 'D' THEN 'Em Análise'
+	   	 WHEN 'P' THEN 'Aguardando Peça'
+	   	 WHEN 'S' THEN 'Aguardando Serviço'
+	   	 WHEN 'E' THEN 'Em Execução'
+	   	 WHEN 'F' THEN 'Finalizada'
+	   	 WHEN 'N' THEN 'Aguardando NF do Forncedor'
+	   END "Avanço",
+       Ordem."U_CodEquipam"     AS "IdEquipamento",
+       CASE WHEN Ordem."U_DtSaida" IS NOT NULL 
+         THEN SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE(Ordem."U_DtEntrada")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEntrada")),
+                              TO_TIMESTAMP(TO_DATE(Ordem."U_DtSaida")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEncerramento" ))) / 60 
+         ELSE SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE(Ordem."U_DtEntrada")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEntrada")),
+                              CURRENT_TIMESTAMP)
+       END AS "Tmp Decorrido"
+  FROM "@AGRI_OSOF" Ordem
+WHERE Ordem."Canceled"  = 'N';

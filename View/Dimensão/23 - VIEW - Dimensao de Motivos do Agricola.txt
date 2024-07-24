@@ -1,0 +1,6 @@
+CREATE OR REPLACE VIEW "vw_dAgriMotivo"("IdMotivo",
+                                    "DescMotivo") AS 
+SELECT Motivo."Code"          AS "IdMotivo",
+       INITCAP(Motivo."Name") AS "DescMotivo"  
+  FROM "@AGRI_MTEM" Motivo
+WHERE Motivo."Canceled" = 'N';

@@ -1,0 +1,6 @@
+CREATE OR REPLACE VIEW "vw_dAgriClasseOS" ("IdClasse",
+                                           "DescClasse") AS 
+SELECT Classe."Code"          AS "IdClasse",
+       INITCAP(Classe."Name") AS "DescClasse"
+  FROM "@AGRI_CLAM" Classe
+WHERE Classe."Canceled" = 'N';
