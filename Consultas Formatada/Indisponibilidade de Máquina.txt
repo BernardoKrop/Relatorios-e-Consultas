@@ -14,6 +14,7 @@ SELECT Ordem."DocEntry"         AS "Nr OS",
 	   	 WHEN 'F' THEN 'Finalizada'
 	   	 WHEN 'N' THEN 'Aguardando NF do Forncedor'
 	   END "Avanço",
+	   Ordem."U_CodEquipam"                   AS "Frota",
        INITCAP(Equipamento."U_DscModelo")     AS "Equipamento",
        CASE WHEN Ordem."U_DtSaida" IS NOT NULL 
          THEN ROUND(SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE(Ordem."U_DtEntrada")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEntrada")),
