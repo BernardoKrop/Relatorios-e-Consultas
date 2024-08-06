@@ -1,0 +1,125 @@
+CREATE OR REPLACE VIEW "vw_fContasPagar" AS 
+SELECT 
+    LivroRazaoItem."BPLId" 		AS Filial
+	, CASE
+		WHEN LivroRazao."TransType" = '18' 	THEN NFEntrada."DocNum" 	    -- Numero de Nota Fiscal
+		WHEN LivroRazao."TransType" = '204' THEN Adiantamento."DocNum" 	-- Numero de Adiantamento
+		WHEN LivroRazao."TransType" = '30'	THEN LivroRazao."TransId"		-- Numero de Lançamento Contabil do Documento de Baixa
+	END AS "NumInterno" 
+	, CASE
+		WHEN LivroRazao."TransType" = '18' 	THEN NFEntrada."CardCode"
+		WHEN LivroRazao."TransType" = '204'	THEN Adiantamento."CardCode" 
+		WHEN LivroRazao."TransType" = '30' 	THEN LivroRazaoItem."Ref1"
+	END AS "Fornecedor"    
+    , CASE
+        WHEN LivroRazao."TransType" = '18'  	THEN 'NF' 						-- Nota Fiscal
+        WHEN LivroRazao."TransType" = '204' 	THEN 'AD'						-- Adiantamento
+        WHEN LivroRazao."TransType" = '30'  	THEN 'LC' 						-- Lançamento Contábil 
+    END AS "DocTipo" 
+/*========================== VALOR DAS CONTAS ==========================*/
+    , CASE
+		WHEN LivroRazao."TransType" = '18' 	THEN NFEntrada."DocTotal"  
+		WHEN LivroRazao."TransType" = '204' THEN Adiantamento."DocTotal"
+		WHEN LivroRazao."TransType" = '30'  THEN LivroRazao."LocTotal"
+     END AS "VlrDocOrigem"	  -- Valor Total do documento de origem
+	, CASE
+		WHEN LivroRazao."TransType" = '18' 	THEN NFEntradaPrestacao."InsTotal" - NFEntradaPrestacao."PaidToDate" 
+		WHEN LivroRazao."TransType" = '204'	THEN AdiantamentoPrestacao."InsTotal" - AdiantamentoPrestacao."PaidToDate"
+		WHEN LivroRazao."TransType" = '30' 	THEN LivroRazaoItem."Credit" 	
+	END AS "VlrPagar" 	 				-- Referente ao valor da parcela
+	, CASE
+		WHEN LivroRazao."TransType" = '18'  THEN (NFEntradaItem."OcrSoma"  / SUM(NFEntradaItem."OcrSoma") 
+		                                                                     OVER (PARTITION BY NFEntrada."DocEntry", NFEntradaPrestacao."InstlmntID")) 
+		                                                * (NFEntradaPrestacao."InsTotal" - NFEntradaPrestacao."PaidToDate")
+		WHEN LivroRazao."TransType" = '204' THEN (AdiantamentoItem."OcrSoma"  / SUM(AdiantamentoItem."OcrSoma") 
+		                                                                     OVER (PARTITION BY Adiantamento."DocEntry", AdiantamentoPrestacao."InstlmntID")) 
+		                                                * (AdiantamentoPrestacao."InsTotal" - AdiantamentoPrestacao."PaidToDate")
+		WHEN LivroRazao."TransType" = '30'  THEN LivroRazaoItem."Credit" 
+     END AS "RateioPrevisto" 
+	, CASE
+		WHEN LivroRazao."TransType" = '18' 	THEN NFEntradaPrestacao."InstlmntID"
+		WHEN LivroRazao."TransType" = '204'	THEN AdiantamentoPrestacao."InstlmntID" 
+		WHEN LivroRazao."TransType" = '30' 	THEN NULL
+	END AS "Prestacao" 
+	, CASE
+		WHEN LivroRazao."TransType" = '18' 	THEN NFEntrada."Installmnt"
+		WHEN LivroRazao."TransType" = '204'	THEN Adiantamento."Installmnt"
+		WHEN LivroRazao."TransType" = '30' 	THEN NULL
+	END AS "Parcela" 	 
+/*========================== DATA DAS CONTAS ==========================*/ 
+	, CASE
+	   WHEN LivroRazao."TransType" = '18'  	THEN CAST ( NFEntrada."DocDate" AS DATE 	)
+	   WHEN LivroRazao."TransType" = '204' 	THEN CAST ( Adiantamento."DocDate" AS DATE 	)         
+	   WHEN LivroRazao."TransType" = '30'  	THEN CAST ( LivroRazao."RefDate" AS DATE 	)
+	END AS "DtLancamento"
+	, CASE
+	   WHEN LivroRazao."TransType" = '18'  	THEN CAST ( NFEntradaPrestacao."DueDate" AS DATE 	)
+	   WHEN LivroRazao."TransType" = '204' 	THEN CAST ( AdiantamentoPrestacao."DueDate" AS DATE 	)         
+	   WHEN LivroRazao."TransType" = '30'  	THEN CAST ( LivroRazao."DueDate" AS DATE 	)
+	END AS "DtVencimento"
+   , CASE
+       WHEN LivroRazao."TransType" = '18'  	THEN CAST ( NFEntrada."TaxDate" AS DATE 	)
+       WHEN LivroRazao."TransType" = '204' 	THEN CAST ( Adiantamento."TaxDate" AS DATE 	)        
+       WHEN LivroRazao."TransType" = '30'  	THEN CAST ( LivroRazao."TaxDate" AS DATE 	)
+   END AS "DtEmissao"
+/*========================== DIMENSAO DAS CONTAS ==========================*/
+	, CASE
+		WHEN LivroRazao."TransType" = '18' 	THEN NFEntradaItem."OcrCode"
+		WHEN LivroRazao."TransType" = '204' 	THEN AdiantamentoItem."OcrCode"
+		WHEN LivroRazao."TransType" = '30' 	THEN LivroRazaoItem."ProfitCode"
+		ELSE NULL
+	END AS "Unidade" 
+	, CASE
+		WHEN LivroRazao."TransType" = '18' 	THEN NFEntradaItem."OcrCode2"
+		WHEN LivroRazao."TransType" = '204' 	THEN AdiantamentoItem."OcrCode2"
+		WHEN LivroRazao."TransType" = '30' 	THEN LivroRazaoItem."OcrCode2"
+		ELSE NULL
+	END AS "Departamento" 
+	, CASE
+		WHEN LivroRazao."TransType" = '18' 	THEN NFEntradaItem."OcrCode3"
+		WHEN LivroRazao."TransType" = '204' 	THEN AdiantamentoItem."OcrCode3"
+		WHEN LivroRazao."TransType" = '30' 	THEN LivroRazaoItem."OcrCode3"
+		ELSE NULL
+	END AS "Natureza" 
+FROM           "OJDT" LivroRazao 
+    INNER JOIN "JDT1" LivroRazaoItem        ON LivroRazaoItem."TransId" = LivroRazao."TransId" 
+    INNER JOIN "OCRD" Parceiro              ON LivroRazaoItem."ShortName" = Parceiro."CardCode" 
+    LEFT  JOIN "CRD7" ParceiroLocais        ON ParceiroLocais."CardCode" = Parceiro."CardCode"            AND ParceiroLocais."Address" = '' 
+    LEFT  JOIN "OPCH" NFEntrada             ON NFEntrada."DocEntry" = LivroRazao."CreatedBy"              AND LivroRazao."TransType" = NFEntrada."ObjType" 
+    LEFT  JOIN (SELECT "DocEntry",
+       				   SUM("LineTotal") AS "OcrSoma",
+      				   "OcrCode",
+       				   "OcrCode2",
+       				   "OcrCode3"
+                  FROM PCH1
+                GROUP BY "DocEntry",
+                         "OcrCode",
+                         "OcrCode2",
+                         "OcrCode3")
+                      NFEntradaItem         ON NFEntrada."DocEntry" = NFEntradaItem."DocEntry"                  
+    LEFT  JOIN "ODPO" Adiantamento          ON Adiantamento."DocEntry" = LivroRazao."CreatedBy"           AND LivroRazao."TransType" = Adiantamento."ObjType" 
+    LEFT  JOIN (SELECT "DocEntry",
+       				   SUM("LineTotal") AS "OcrSoma",
+      				   "OcrCode",
+       				   "OcrCode2",
+       				   "OcrCode3"
+                  FROM DPO1
+                GROUP BY "DocEntry",
+                         "OcrCode",
+                         "OcrCode2",
+                         "OcrCode3") 
+                      AdiantamentoItem      ON Adiantamento."DocEntry" = AdiantamentoItem."DocEntry"   
+    LEFT  JOIN "PCH6" NFEntradaPrestacao    ON NFEntradaPrestacao."DocEntry" = NFEntrada."DocEntry"       AND NFEntradaPrestacao."InstlmntID" = LivroRazaoItem."SourceLine" 
+    LEFT  JOIN "DPO6" AdiantamentoPrestacao ON AdiantamentoPrestacao."DocEntry" = Adiantamento."DocEntry" AND AdiantamentoPrestacao."InstlmntID" = LivroRazaoItem."SourceLine" 
+	WHERE
+		(LivroRazao."TransType"		= '30' OR
+ 		NFEntrada."CANCELED" 		= 'N'  OR
+ 		Adiantamento."CANCELED"     = 'N')
+		AND LivroRazaoItem."Ref3Line" IS NOT NULL	 
+		AND (LivroRazaoItem."BalDueDeb"  <> 0 OR 
+             LivroRazaoItem."BalDueCred" <> 0 OR 
+             LivroRazaoItem."BalFcDeb"   <> 0 OR
+             LivroRazaoItem."BalFcCred"  <> 0)
+AND Parceiro."CardType" = 'S' 
+	ORDER BY 3,"Prestacao"
+	
