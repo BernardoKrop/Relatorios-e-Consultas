@@ -1,0 +1,6 @@
+CREATE OR REPLACE VIEW "vw_dSistemaVeic" AS 
+SELECT SisVeic."Code" AS "IdSisVeic",
+       INITCAP(SisVeic."Name") AS "DescSisVeic"
+  FROM "@AGRI_SISV" SisVeic
+UNION ALL 
+SELECT -1, 'Nao informado' FROM DUMMY;

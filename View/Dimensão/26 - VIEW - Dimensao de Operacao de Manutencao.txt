@@ -1,0 +1,6 @@
+CREATE OR REPLACE VIEW "vw_dOperacaoManut" AS 
+SELECT OperManut."Code" AS "IdOperMan",
+       INITCAP(OperManut."Name") AS "DescOperMan"
+  FROM "@AGRI_OPMA" OperManut
+UNION ALL 
+SELECT -1, 'Nao informado' FROM DUMMY;
