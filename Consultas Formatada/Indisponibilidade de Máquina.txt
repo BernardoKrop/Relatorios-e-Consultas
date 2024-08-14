@@ -1,27 +1,19 @@
-SELECT Ordem."DocEntry"         AS "Nr OS",
-       INITCAP(Ordem."U_DscFazenda") AS "Fazenda",
-       INITCAP(Ordem."U_DscMotivo")  AS "Motivo",  
-       INITCAP(Ordem."U_DscClassMa") AS "Classe",
-       CASE Ordem."U_Status"
-         WHEN 'E' THEN 'Encerrada'
-         WHEN 'A' THEN 'Aberta'
-       END AS "Status",
-	   CASE "U_Avanco" 
-	   	 WHEN 'D' THEN 'Em Análise'
-	   	 WHEN 'P' THEN 'Aguardando Peça'
-	   	 WHEN 'S' THEN 'Aguardando Serviço'
-	   	 WHEN 'E' THEN 'Em Execução'
-	   	 WHEN 'F' THEN 'Finalizada'
-	   	 WHEN 'N' THEN 'Aguardando NF do Forncedor'
-	   END "Avanço",
-	   Ordem."U_CodEquipam"                   AS "Frota",
-       INITCAP(Equipamento."U_DscModelo")     AS "Equipamento",
-       CASE WHEN Ordem."U_DtSaida" IS NOT NULL 
-         THEN ROUND(SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE(Ordem."U_DtEntrada")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEntrada")),
-                              TO_TIMESTAMP(TO_DATE(Ordem."U_DtSaida")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEncerramento" ))) / 60/60,2)
-         ELSE ROUND(SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE(Ordem."U_DtEntrada")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEntrada")),
-                              CURRENT_TIMESTAMP) / 60 /60,2)
-       END AS "Tmp Decorrido [Hrs]"
-  FROM      "@AGRI_OSOF" Ordem
-  LEFT JOIN "@AGRI_EQPM" Equipamento ON Ordem."U_CodEquipam" = Equipamento."Code"
-WHERE Ordem."Canceled"  = 'N';
+SELECT Ordem."NrOS"                 AS "Nr Ordem",
+       INITCAP(Fazenda."Name")      AS "Fazenda",
+       INITCAP(Motivo."Name")       AS "Motivo",
+       INITCAP(Classe."Name")       AS "Classe",
+       Ordem."Status",
+	   Ordem."Avanço", 	 
+	   Ordem."IdEquipamento"        AS "Frota",
+	   INITCAP(Equip."U_DscModelo") AS "Equipamento",
+       Ordem."TmpDecorrido"         AS "Tempo Decorrido (Hrs)",
+       Ordem."TmpNumero"            AS "Tempo Decorrido (Nr)", 
+       Ordem."DataEntrada",
+       MONTH(Ordem."DataEntrada")   AS "Mes Entrada",
+       YEAR(Ordem."DataEntrada")    AS "Ano Entrada",
+       Ordem."DataSaida" 
+  FROM      "vw_fOSOficina" Ordem
+  LEFT JOIN "@AGRI_UNPF"    Fazenda ON Ordem."IdFazenda"     = Fazenda."Code" 
+  LEFT JOIN "@AGRI_MTEM"    Motivo  ON Ordem."IdMotivo"      = Motivo."Code"
+  LEFT JOIN "@AGRI_CLAM"    Classe  ON Ordem."IdClasse"      = Classe."Code" 
+  LEFT JOIN "@AGRI_EQPM"    Equip   ON Ordem."IdEquipamento" = Equip."Code"

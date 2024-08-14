@@ -1,12 +1,5 @@
-CREATE OR REPLACE VIEW "vw_fOSOficina" ("Nr OS",
-							 "IdFazenda",
-							 "IdMotivo",
-							 "IdClasse",
-							 "Status",
-							 "Avanço",
-							 "IdEquipamento",
-							 "Tmp Decorrido") AS 
-SELECT Ordem."DocEntry"         AS "Nr OS",
+CREATE OR REPLACE VIEW SBOTRUSTAGRO."vw_fOSOficina" AS
+SELECT Ordem."DocEntry"         AS "NrOS",
        Ordem."U_CodFazenda"     AS "IdFazenda",
        Ordem."U_CodMotivo"      AS "IdMotivo",  
        Ordem."U_CodClassMa"     AS "IdClasse",
@@ -23,11 +16,17 @@ SELECT Ordem."DocEntry"         AS "Nr OS",
 	   	 WHEN 'N' THEN 'Aguardando NF do Forncedor'
 	   END "Avanço",
        Ordem."U_CodEquipam"     AS "IdEquipamento",
-       CASE WHEN Ordem."U_DtSaida" IS NOT NULL 
-         THEN SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE(Ordem."U_DtEntrada")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEntrada")),
-                              TO_TIMESTAMP(TO_DATE(Ordem."U_DtSaida")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEncerramento" ))) / 60 
-         ELSE SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE(Ordem."U_DtEntrada")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEntrada")),
-                              CURRENT_TIMESTAMP)
-       END AS "Tmp Decorrido"
-  FROM "@AGRI_OSOF" Ordem
+       FLOOR("Tempo") || ':' || LPAD(FLOOR(("Tempo" - FLOOR("Tempo")) * 60), 2, '0') AS "TmpDecorrido",
+       Ordem."Tempo"   AS "TmpNumero",
+       TO_DATE(Ordem."U_DtEntrada") AS "DataEntrada",
+       TO_DATE(Ordem."U_DtSaida")   AS "DataSaida",
+       Ordem."U_CodOperador"        AS "IdOperador"
+  FROM (SELECT CASE WHEN "U_DtSaida" IS NOT NULL 
+         THEN ROUND(SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE("U_DtEntrada")||' '||"Agri_ConversaoIntHora"("U_HoraEntrada")),
+                              TO_TIMESTAMP(TO_DATE("U_DtSaida")||' '||"Agri_ConversaoIntHora"("U_HoraEncerramento" ))) / 60/60,2)
+         ELSE ROUND(SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE("U_DtEntrada")||' '||"Agri_ConversaoIntHora"("U_HoraEntrada")),
+                              CURRENT_TIMESTAMP) / 60 /60,2)
+       END AS "Tempo",
+       *
+  FROM "@AGRI_OSOF" ) Ordem
 WHERE Ordem."Canceled"  = 'N';
