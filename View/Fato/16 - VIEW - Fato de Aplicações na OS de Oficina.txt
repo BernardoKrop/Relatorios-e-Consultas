@@ -1,6 +1,0 @@
-CREATE OR REPLACE VIEW "vw_fAplicacaoOS" AS 
-SELECT AplicOS."DocEntry"     AS "IdOrdem",
-       COALESCE (AplicOS."U_CodSisVeic",-1) AS "IdSisVeic",
-       COALESCE (AplicOs."U_CodOperMan",-1) AS "IdOperMan",
-       TO_DATE(AplicOS."U_DtAplicaca") AS "DataAplic"
-  FROM "@AGRI_OSOA" AplicOS;
