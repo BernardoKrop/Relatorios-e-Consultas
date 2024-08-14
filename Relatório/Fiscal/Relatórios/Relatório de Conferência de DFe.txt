@@ -13,16 +13,27 @@ SELECT 'NF - ' || CAST(DFEImportada."KeyNfe" AS TEXT)                AS "Chave I
          WHEN DFEImportada."CompanyId" IN (20,22,16,19) THEN 'Wilkson/Time Suprimentos'
          WHEN DFEImportada."CompanyId" = 18 THEN 'Waudumir' 
          WHEN DFEImportada."CompanyId" = 21 THEN 'Geovana/Lucas'
-       END                                                            AS "Responsável",
-       Empresa."RazaoSocial"                						  AS "Empresa",
+       END                                                           AS "Responsável",
+       Empresa."RazaoSocial"                						 AS "Empresa",
        Modelo."NfmName"                                              AS "Modelo",
        OrigemImp."Description"                                       AS "Origem Importação",
        StatusDFE."Description"                                       AS "Situação Documento",
        SituacaoSefaz."Descricao"                                     AS "Retorno Sefaz",
        DFEImportada."Serial"                                         AS "Nota",
+       Documentos."TipoOrigem"                                       AS "Tipo Doc",
+       CASE Documentos."DocStatus" 
+         WHEN 'C' THEN 'Fechado'
+         WHEN 'O' THEN 'Aberto'
+       END                                                           AS "Status Doc",
+       CASE Documentos."CANCELED" 
+         WHEN 'Y' THEN 'Sim'
+         WHEN 'N' THEN 'Não'
+         WHEN 'C' THEN 'Cancelamento'
+       END                                                           AS "Cancelado",
+       UsoPrincipal."Usage"                                          AS "Uso Principal",
        TO_DATE(DFEImportada."DateReceived")                          AS "Data Documento",
        DFEImportada."CardCode"                                       AS "Código Parceiro",
-       DFEImportada."TaxId"                         	              AS "CPF/CNPJ Parceiro",
+       DFEImportada."TaxId"                         	             AS "CPF/CNPJ Parceiro",
        'IE - '||DFEImportada."IeParceiroXml"                         AS "I.E Parceiro Xml",
        DFEImportada."CardName"                                       AS "NomeParceiro",
        Municipio."Name"                                              AS "Municipio",
@@ -36,13 +47,7 @@ SELECT 'NF - ' || CAST(DFEImportada."KeyNfe" AS TEXT)                AS "Chave I
   LEFT JOIN "Entidade" Empresa                         ON DFEImportada."CompanyId" = Empresa."ID"
   LEFT JOIN "CodigoSituacaoDaNfeNaSefaz" SituacaoSefaz ON DFEImportada."SefazId" = SituacaoSefaz."cStat"
   LEFT JOIN OCNT Municipio                             ON DFEImportada."IbgeCode" = Municipio."IbgeCode"
-  LEFT JOIN (SELECT "U_ChaveAcesso", "UserSign" FROM OPCH
-                UNION ALL
-              SELECT "U_ChaveAcesso", "UserSign" FROM ORPC
-                UNION ALL
-              SELECT "U_ChaveAcesso", "UserSign" FROM ODLN
-                UNION ALL 
-              SELECT "U_ChaveAcesso", "UserSign" FROM OPDN) Documentos
-    ON DFEImportada."KeyNfe" = Documentos."U_ChaveAcesso"
-  LEFT JOIN OUSR Usuario ON Documentos."UserSign" = Usuario."USERID"
-  LEFT JOIN ONFM Modelo  ON DFEImportada."Modelo" = Modelo."NfmCode"
+  LEFT JOIN "vw_fDocsOrigem" Documentos                ON DFEImportada."KeyNfe" = Documentos."U_ChaveAcesso"
+  LEFT JOIN OUSR Usuario                               ON Documentos."UserSign"  = Usuario."USERID"
+  LEFT JOIN ONFM Modelo                                ON DFEImportada."Modelo"  = Modelo."NfmCode"
+  LEFT JOIN OUSG UsoPrincipal                          ON Documentos."MainUsage" = UsoPrincipal."ID"
