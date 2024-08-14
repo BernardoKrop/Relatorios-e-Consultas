@@ -1,0 +1,23 @@
+SELECT Pedido."DocNum",
+       Pedido."CardCode",
+       Pedido."CardName",
+       TO_DATE(Pedido."DocDate")    AS "DtLanc",
+       TO_DATE(Pedido."DocDueDate") AS "DtVenc",
+       Pedido."U_SitPedido",
+       Pedido."BPLName",
+       Pedido."DocTotal",
+       Usuario."U_NAME",
+       CASE (SELECT COUNT("AbsEntry") FROM ATC1 WHERE "AbsEntry" = Pedido."AtcEntry") 
+         WHEN 0 THEN 'N'
+         ELSE 'S'
+       END AS "Anexo",
+       Pedido."AtcEntry",
+       Pedido."DocEntry",
+       TO_DATE(Pedido."TaxDate") AS "TaxDate",
+       CASE Pedido."DocStatus"
+         WHEN 'C' THEN 'Fechado'
+         ELSE 'Aberto'
+       END AS "Status",
+       CAST(Pedido."BPLId" AS nvarchar) AS "BPLId"
+  FROM OPOR Pedido
+  LEFT JOIN OUSR Usuario ON Pedido."UserSign" = Usuario."USERID"
