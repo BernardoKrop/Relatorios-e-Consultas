@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------------- 
---		      					Opoeração Agrícola
+--		      					Operação Agrícola
 -----------------------------------------------------------------------------------
 -- CRIADO POR: 				19/02/2024		JOHNSON WESLEY HRENECHEN	
 -- ( I ) ATUALIZADO POR: 	26/02/2024		JOHNSON WESLEY HRENECHEN
@@ -12,38 +12,7 @@
 -- OBJETIVO: Dimensionalizar os dados das operações agrícolas.
 -- DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
 -- SCHEMA: SBOTRUSTAGRO
-
-
--- Iniciando a transação
-BEGIN TRANSACTION;
-SET SCHEMA SBOTRUSTAGRO;
-
-
-
-ALTER VIEW "SBOTRUSTAGRO"."vw_OperacaoAgricola"
-	(
-	Cod_Apontamento ,
-	"Status" ,
-	Cod_Talhao ,
-	Cod_Operacao ,
-	Dt_Inicio ,
-	Dt_Fim ,
-	Hrs_Operacao ,
-	Cod_Maquina ,
-	Hectare ,
-	Meta ,
-	Horimetro ,
-	Custo_Maquina_Interno ,
-	Custo_Maquina_Externo ,
-	Cod_Colaborador ,
-	Hrs_Colaborador ,
-	Cod_MotivoParada ,
-	Cod_TipoParada ,
-	Hrs_Paradas ,
-	Custo_Colaborador ,
-	Custo_Insumo ,
-	Custo_Tarifeiro
-	) AS 
+ CREATE OR REPLACE VIEW "vw_OperacaoAgricola" AS 
 		SELECT 
 		    Operacao."DocEntry" 					AS Cod_Apontamento, -- Chave primária da operação
 		    Operacao."U_Status"					AS "Status" ,
@@ -82,27 +51,24 @@ ALTER VIEW "SBOTRUSTAGRO"."vw_OperacaoAgricola"
 						' ' , 1
 						) + 1 , 8 -- Qntd de caracteres em um formato de hora, minuto e segundo considerando os ' : '			
 				) AS TIME ) AS Horimetro ,
-		    CAST ( Maquina."U_CustoEquipamento" AS DECIMAL(10,2) )			AS Custo_Maquina_Interno , -- Com uso da fCombustivel e o valor de consumo de lá, pode-se subtrair este, para chegar ao resultado de CRM.
-		     CAST (
+		    --CAST ( Maquina."U_CustoEquipamento" AS DECIMAL(10,2) ) AS Custo_Maquina_Interno , --(Valor da OS)        Com uso da fCombustivel e o valor de consumo de lá, pode-se subtrair este, para chegar ao resultado de CRM.
+
 		     	COALESCE (
-			     (
-			        SELECT
-			            ( SUM(fNF_Compras."OpenSum") * SUM (Maquina."U_Total") ) / 2
-			        FROM
-			            PCH1 AS fNF_Compras
-			            JOIN OPCH AS dNF_Compra ON fNF_Compras."DocEntry" = dNF_Compra."DocEntry"
-			        WHERE
-			            fNF_Compras."OcrCode4" = Maquina."U_CodEquipam"
-			            AND dNF_Compra."CANCELED" NOT IN ('Y', 'C')
-			            AND (fNF_Compras."ItemCode" LIKE 'PEC%' 
-			            	OR fNF_Compras."ItemCode" LIKE 'SMV%'
-			            	OR fNF_Compras."ItemCode" LIKE 'LUB%'
-			            	OR fNF_Compras."ItemCode" LIKE 'PNU%')
-			            AND MONTH(dNF_Compra."TaxDate") = MONTH(Operacao."U_Data")
-			            AND YEAR(dNF_Compra."TaxDate") = YEAR(Operacao."U_Data")
-			    )  /
-				SUM (Maquina."U_Total") OVER ( PARTITION BY YEAR ( Maquina."U_Data" ), MONTH ( Maquina."U_Data" ) ) ,
-				0 ) AS DECIMAL(10,2) ) AS Custo_Maquina_Externo  ,
+			     Maquina."U_AreaTrabalhada"  / SUM(Maquina."U_AreaTrabalhada" ) OVER (PARTITION BY Maquina."U_CodEquipam",
+			                                                                                       YEAR(Operacao."U_Data"), 
+			                                                                                       MONTH(Operacao."U_Data")) *
+		          (SELECT SUM(fNF_Compras."StockSum") 
+			          FROM PCH1 AS fNF_Compras
+			          JOIN OPCH AS dNF_Compra ON fNF_Compras."DocEntry" = dNF_Compra."DocEntry"
+			        WHERE fNF_Compras."OcrCode4" = Maquina."U_CodEquipam"
+			          AND dNF_Compra."CANCELED" NOT IN ('Y', 'C')
+			          AND (fNF_Compras."ItemCode" LIKE 'PEC%'OR 
+			               fNF_Compras."ItemCode" LIKE 'SMV%'OR 
+			               fNF_Compras."ItemCode" LIKE 'LUB%'OR 
+			               fNF_Compras."ItemCode" LIKE 'PNU%')
+			          AND MONTH(dNF_Compra."TaxDate") = MONTH(Operacao."U_Data")
+			          AND YEAR(dNF_Compra."TaxDate") = YEAR(Operacao."U_Data")),0)   AS Custo_Maquina_Externo  ,
+			          
 		    Homen."U_CodColabor" 					AS Cod_Colaborador, 
 		    -- Conversão das horas trabalhadas do colaborador para o formato de tempo HH:MM:SS, elas era originalmente HHMM em Integer
 		    CAST (
@@ -148,7 +114,6 @@ ALTER VIEW "SBOTRUSTAGRO"."vw_OperacaoAgricola"
 --		    AND Talhao."U_CodTalhao"  = 'TALFZSM01'
 --		    AND Operacao."U_Data" BETWEEN '2024-02-01' AND '2024-02-29'
 --		    AND Operacao."U_Status" = 'A'
-
 			--AND Maquina."U_CodEquipam" = '600923'
 		GROUP BY
 		    Operacao."DocEntry" ,
@@ -169,10 +134,5 @@ ALTER VIEW "SBOTRUSTAGRO"."vw_OperacaoAgricola"
 		    Operacao."U_Status" ,
 		    Parada."U_HorasParadas"
 		ORDER BY
-		    Dt_Inicio;
-
--- Concluir a transação
-COMMIT;
--- Caso algo dê errado, desfazer todas as operações da transação
--- ROLLBACK;
-		    
+		   Dt_Inicio
+		   
