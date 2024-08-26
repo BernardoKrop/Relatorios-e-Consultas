@@ -2,7 +2,7 @@ CREATE OR REPLACE VIEW "vw_fContasReceber" AS
 --=================NOTAS DE SAIDA========================
 SELECT NFSaida."BPLId"           AS "IdFilial",
        NFSaida."DocNum"          AS "NumInterno",
-       NFSaida."CardCode"        AS "IdCliente",
+       NFSaida."CardCode"        AS "idParceiro",
        'NF'                      AS "DocTipo",
        NFSaida."DocTotal"        AS "VlrDoc",
        (NFSaida."DocTotal" - 

@@ -1,35 +1,35 @@
 CREATE OR REPLACE VIEW "vw_fContaPaga" AS 
 SELECT
 /*========================== DESCRITIVO DAS CONTAS ==========================*/
-    ContaPaga."BPLId" AS Filial ,
+    ContaPaga."BPLId" AS "idFilial" ,
 	CASE
 		WHEN ContaPagaNota."InvType" = '18' 	THEN NFEntrada."CardCode"
 		WHEN ContaPagaNota."InvType" = '204'	THEN Adiantamento."CardCode" 
 		WHEN ContaPagaNota."InvType" = '30' 	THEN LRItem."Ref1"
-	END AS "Fornecedor" ,    
+	END AS "idParceiro" ,    
 	CASE
 		WHEN ContaPagaNota."InvType" = '30' 		THEN LivroRazao."TransId"		-- Numero de Lançamento Contabil do Documento de Baixa
 		WHEN ContaPagaNota."InvType" = '18' 		THEN NFEntrada."DocNum" 	    -- Numero de Nota Fiscal
 		WHEN ContaPagaNota."InvType" = '204'		THEN Adiantamento."DocNum" 	-- Numero de Adiantamento
-	END AS "Numero Interno" ,
+	END AS "NumInterno" ,
     CASE
         WHEN ContaPagaNota."InvType" = '18'  		THEN 'NF' 						-- Nota Fiscal
         WHEN ContaPagaNota."InvType" = '204' 		THEN 'AD'						-- Adiantamento
         WHEN ContaPagaNota."InvType" = '30'  		THEN 'LC' 						-- Lançamento Contábil 
-    END AS "Doc Tipo",    
+    END AS "DocTipo",    
     ContaPaga."DocNum" AS "Doc Baixa"        ,								--Numero do documento de pagamento
 /*========================== VALOR DAS CONTAS ==========================*/ 
     CASE
           	WHEN ContaPagaNota."InvType" = '18' 	THEN NFEntrada."DocTotal"  
           	WHEN ContaPagaNota."InvType" = '204' 	THEN Adiantamento."DocTotal"
           	WHEN ContaPagaNota."InvType" = '30'  	THEN LivroRazao."LocTotal"
-     END AS "Valor Documento Origem"	 , -- Valor Total do documento de origem
+     END AS "ValorDocOrigem"	 , -- Valor Total do documento de origem
     
     CASE
         	WHEN ContaPagaNota."InvType" = '18'  	THEN NFEntradaPrest."InsTotal"  
           	WHEN ContaPagaNota."InvType" = '204' 	THEN AdiantPrest."InsTotal"
            	WHEN ContaPagaNota."InvType" = '30'  	THEN ContaPaga."DocTotal"
-     END AS "Valor da Prestação"	 , -- Valor da prestação
+     END AS "ValorPrestacao"	 , -- Valor da prestação
      CASE
           	WHEN ContaPagaNota."InvType" = '18'  	THEN (NFItem."OcrSoma"  / SUM(NFItem."OcrSoma") 
 		                                                                     OVER (PARTITION BY NFEntrada."DocEntry", NFEntradaPrest."InstlmntID")) 
@@ -42,7 +42,7 @@ SELECT
            	WHEN ContaPagaNota."InvType" = '30'  	THEN (LRItem."Debit" /  SUM(LRItem."Debit") 
 		                                                                     OVER (PARTITION BY LRItem."TransId",ContaPaga."DocNum")) 
 		                                                * (ContaPaga."DocTotal")                     
-     END AS "Rateio Previsto" ,	 
+     END AS "RateioPrevisto" ,	 
 	             
      CASE
           	WHEN ContaPagaNota."InvType" = '18'  	THEN NFEntradaPrest."PaidToDate"
@@ -61,7 +61,7 @@ SELECT
            	WHEN ContaPagaNota."InvType" = '30'  	THEN (LRItem."Debit" /  SUM(LRItem."Debit") 
 		                                                                     OVER (PARTITION BY LRItem."TransId",ContaPaga."DocNum")) 
 		                                                * (ContaPaga."DocTotal")
-     END AS "Rateio Realizado" ,	
+     END AS "RateioRealizado" ,	
 
 	CASE
         WHEN ContaPagaNota."InvType" = '18' 	 	THEN NFEntradaPrest."InstlmntID"

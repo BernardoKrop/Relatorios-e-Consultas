@@ -1,6 +1,6 @@
 CREATE OR REPLACE VIEW "vw_fContasPagar" AS 
 SELECT 
-    LivroRazaoItem."BPLId" 		AS Filial
+    LivroRazaoItem."BPLId" 		AS "idFilial"
 	, CASE
 		WHEN LivroRazao."TransType" = '18' 	THEN NFEntrada."DocNum" 	    -- Numero de Nota Fiscal
 		WHEN LivroRazao."TransType" = '204' THEN Adiantamento."DocNum" 	-- Numero de Adiantamento
@@ -10,7 +10,7 @@ SELECT
 		WHEN LivroRazao."TransType" = '18' 	THEN NFEntrada."CardCode"
 		WHEN LivroRazao."TransType" = '204'	THEN Adiantamento."CardCode" 
 		WHEN LivroRazao."TransType" = '30' 	THEN LivroRazaoItem."Ref1"
-	END AS "Fornecedor"    
+	END AS "idParceiro"    
     , CASE
         WHEN LivroRazao."TransType" = '18'  	THEN 'NF' 						-- Nota Fiscal
         WHEN LivroRazao."TransType" = '204' 	THEN 'AD'						-- Adiantamento

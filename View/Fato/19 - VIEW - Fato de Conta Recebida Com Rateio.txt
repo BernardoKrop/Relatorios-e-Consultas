@@ -1,37 +1,37 @@
 CREATE OR REPLACE VIEW "vw_fContaRecebida" AS 
 SELECT
 /*========================== DESCRITIVO DAS CONTAS ==========================*/ 	
-   Recebido."BPLId" AS Filial 
-    , Recebido."BPLName" AS FilialNome  
+   Recebido."BPLId" AS "IdFilial"
+    , Recebido."BPLName" AS "FilialNome"  
 	, CASE
-		WHEN RecebidoNota."InvType" = '13' 		THEN NFSaida."CardName"
-		WHEN RecebidoNota."InvType" = '203'		THEN Adiantamento."CardName" 
+		WHEN RecebidoNota."InvType" = '13' 		THEN NFSaida."CardCode"
+		WHEN RecebidoNota."InvType" = '203'		THEN Adiantamento."CardCode" 
 		WHEN RecebidoNota."InvType" = '30' 		THEN LivroRazao."Ref1"
-	END AS "Fornecedor"     
+	END AS "idParceiro"     
 	, CASE
 		WHEN RecebidoNota."InvType" = '30' 		THEN LivroRazao."TransId"				-- Numero de Lançamento Contabil do Documento de Baixa
 		WHEN RecebidoNota."InvType" = '13' 		THEN NFSaida."DocNum" 	    		-- Numero de Nota Fiscal
 		WHEN RecebidoNota."InvType" = '203'		THEN Adiantamento."DocNum" 	-- Numero de Adiantamento
-	END AS "Numero Interno" 
+	END AS "NumInterno" 
     , CASE
         WHEN RecebidoNota."InvType" = '13'  		THEN 'NF' 						-- Nota Fiscal
         WHEN RecebidoNota."InvType" = '203' 		THEN 'AD'						-- Adiantamento
         WHEN RecebidoNota."InvType" = '30'  		THEN 'LC' 						-- Lançamento Contábil 
-    END AS "Doc Tipo"    
+    END AS "DocTipo"    
     , Recebido."DocNum" AS "Doc Baixa"        								--Numero do documento de pagamento
 /*========================== VALOR DAS CONTAS ==========================*/ 
-
+    
     , CASE
           	WHEN RecebidoNota."InvType" = '13' 	THEN NFSaida."DocTotal"  
           	WHEN RecebidoNota."InvType" = '203' 	THEN Adiantamento."DocTotal"
           	WHEN RecebidoNota."InvType" = '30'  	THEN LivroRazao."LocTotal"
-     END AS "Valor Documento Origem"	  -- Valor Total do documento de origem
-    
+     END AS "VlrDocOrigem"	  -- Valor Total do documento de origem
+    /*
     , CASE
         	WHEN RecebidoNota."InvType" = '13'  	THEN NFSaidaPrest."InsTotal"  
           	WHEN RecebidoNota."InvType" = '203' 	THEN AdiantPrest."InsTotal"
            	WHEN RecebidoNota."InvType" = '30'  	THEN LivroRazao."LocTotal"
-     END AS "Valor da Prestação"	  -- Valor da prestação
+     END AS "VlrPrestação"	  -- Valor da prestação
 
      , CASE
           	WHEN RecebidoNota."InvType" = '13'  	THEN (NFSaidaItem."OcrSoma"  / SUM(NFSaidaItem."OcrSoma") 
@@ -43,14 +43,15 @@ SELECT
                                                                                                       AdiantPrest."InstlmntID")) *
                                                          (AdiantPrest."InsTotal")
            	WHEN RecebidoNota."InvType" = '30'  	THEN LivroRazao."LocTotal"
-     END AS "Rateio Previsto" 	
+     END AS "RateioPrevisto" 	
     
 	, CASE
           	WHEN RecebidoNota."InvType" = '13'  	THEN NFSaidaPrest."PaidToDate"
           	WHEN RecebidoNota."InvType" = '203' 	THEN AdiantPrest."PaidToDate"
            	WHEN RecebidoNota."InvType" = '30'  	THEN Recebido."DocTotal"
      END AS "Realizado" 
-	, CASE
+	 */
+	,CASE
 			WHEN RecebidoNota."InvType" = '13' 	THEN 	(NFSaidaItem."OcrSoma"  / SUM(NFSaidaItem."OcrSoma") 
                                                                                    OVER (PARTITION BY NFSaida."DocEntry",
                                                                                                       NFSaidaPrest."InstlmntID")) *
@@ -61,7 +62,7 @@ SELECT
                                                          (AdiantPrest."PaidToDate")
 			WHEN RecebidoNota."InvType" = '30'		THEN 	( RecebidoNota."SumApplied"- RecebidoNota."WtAppld" + ( Recebido."UndOvDiff"/ COUNT (Recebido."UndOvDiff") OVER ( PARTITION BY Recebido."DocNum" ) ) ) / -- Retorna o valor realizado
 														COUNT (RecebidoNota."SumApplied") OVER ( PARTITION BY Recebido."DocNum" , RecebidoNota."SumApplied" )
-	END AS "Rateio Realizado" 	
+	END AS "RateioRealizado" 	
 
 	, CASE
         WHEN RecebidoNota."InvType" = '13' 	 	THEN NFSaidaPrest."InstlmntID"
@@ -99,9 +100,9 @@ SELECT
 	END AS "Conta"  --Conta Contabil
 
 	, CASE
-		WHEN Recebido."TrsfrSum"		> 0 	THEN ( SELECT dPlanoDeContas."AcctName" FROM OACT AS dPlanoDeContas WHERE dPlanoDeContas."AcctCode" = Recebido."TrsfrAcct" ) 
-		WHEN Recebido."CashSum"		> 0 	THEN ( SELECT dPlanoDeContas."AcctName" FROM OACT AS dPlanoDeContas WHERE dPlanoDeContas."AcctCode" = Recebido."CashAcct" )
-		WHEN Recebido."CheckSum" 		> 0 	THEN ( SELECT dPlanoDeContas."AcctName" FROM OACT AS dPlanoDeContas WHERE dPlanoDeContas."AcctCode" = Recebido."CheckAcct" )
+		WHEN Recebido."TrsfrSum"	> 0 	THEN (SELECT Banco."Account" FROM DSC1 AS Banco WHERE Banco."GLAccount" = Recebido."TrsfrAcct" ) 
+		WHEN Recebido."CashSum"		> 0 	THEN (SELECT Banco."Account" FROM DSC1 AS Banco WHERE Banco."GLAccount" = Recebido."CashAcct" )
+		WHEN Recebido."CheckSum" 	> 0 	THEN (SELECT Banco."Account" FROM DSC1 AS Banco WHERE Banco."GLAccount" = Recebido."CheckAcct" )
 		WHEN Recebido."BoeSum" 		> 0 	THEN Boleto."BPBankNam" || ' - AG ' || Boleto."BPBankBrnc" || ' - C/C ' || Boleto."BPBankAct" 
 	END AS "Banco"  --Banco da movimentação
 	, CASE
@@ -109,7 +110,7 @@ SELECT
 		WHEN Recebido."CashSum" 		> 0 	THEN 'Espécie'
 		WHEN Recebido."CheckSum" 		> 0 	THEN 'Cheque'
 		WHEN Recebido."BoeSum" 		> 0 	THEN 'Boleto'
-	END AS "Tipo Pagamento"  	
+	END AS "TipoPagamento"  	
 	, CASE
 	   WHEN RecebidoNota."InvType" 	= '13'  	THEN NFSaidaItem."OcrCode"
 	   WHEN RecebidoNota."InvType"	= '203'     THEN AdiantItem."OcrCode"         

@@ -1,0 +1,7 @@
+CREATE OR REPLACE VIEW "vw_dContaBancaria" AS 
+SELECT ContaBanc."BankCode" AS "CodBanco",
+       ContaBanc."Account"   AS "CodConta",
+       ContaBanc."Branch"   AS "CodFilial",
+       ContaBanc."AcctName" AS "NomeConta",
+       ContaBanc."GLAccount" AS "CCBanco"
+  FROM DSC1 ContaBanc
