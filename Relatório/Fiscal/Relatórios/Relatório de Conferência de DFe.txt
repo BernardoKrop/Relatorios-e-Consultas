@@ -40,7 +40,8 @@ SELECT 'NF - ' || CAST(DFEImportada."KeyNfe" AS TEXT)                AS "Chave I
        Municipio."State"                                             AS "UF",
        DFEImportada."NatOp"                                          AS "Natureza Operação",
        DFEImportada."DocTotal"                                       AS "Total do Documento",
-       Usuario."U_NAME"                                              AS "Usuário Lançamento"
+       Usuario."U_NAME"                                              AS "Usuário Lançamento",
+       CURRENT_DATE                                                  AS "Data Atual"
   FROM      "DocReceived" DFEImportada 
   LEFT JOIN "DocReceivedStatus" StatusDFE              ON DFEImportada."StatusId" = StatusDFE."ID"
   LEFT JOIN "ImportSource" OrigemImp                   ON DFEImportada."ImportSourceId" = OrigemImp."ID"
