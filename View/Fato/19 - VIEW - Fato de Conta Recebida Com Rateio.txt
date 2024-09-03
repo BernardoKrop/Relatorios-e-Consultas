@@ -115,22 +115,19 @@ SELECT
 	   WHEN RecebidoNota."InvType" 	= '13'  	THEN NFSaidaItem."OcrCode"
 	   WHEN RecebidoNota."InvType"	= '203'     THEN AdiantItem."OcrCode"         
 	   WHEN RecebidoNota."InvType" 	= '30'  	THEN LRItem."ProfitCode"
-	END AS "Localizacao"	
+	END AS "idLocalizacao"	
 	, CASE
 	   WHEN RecebidoNota."InvType" 	= '13'  	THEN NFSaidaItem."OcrCode2"
 	   WHEN RecebidoNota."InvType" 	= '203' 	THEN AdiantItem."OcrCode2"         
 	   WHEN RecebidoNota."InvType" 	= '30'  	THEN LRItem."OcrCode2"
-	END AS "Departamento"
+	END AS "idDepartamento"
 	, CASE
 	   WHEN RecebidoNota."InvType" 	= '13'  	THEN NFSaidaItem."OcrCode3"
 	   WHEN RecebidoNota."InvType" 	= '203' 	THEN AdiantItem."OcrCode3"         
 	   WHEN RecebidoNota."InvType" 	= '30'  	THEN LRItem."OcrCode3"
-	END AS "Natureza"
-	
-	FROM       RCT2		AS RecebidoNota
+	END AS "idNatureza"
+  FROM       RCT2		AS RecebidoNota
 	INNER JOIN ORCT		AS Recebido       ON Recebido."DocEntry" 	  = RecebidoNota."DocNum"	
-	LEFT JOIN  OJDT		AS LivroRazao     ON Recebido."TransId" 	  = LivroRazao."TransId"
-	LEFT JOIN JDT1		AS LRItem         ON LivroRazao."TransId"	  = LRItem."TransId"
 	LEFT JOIN (SELECT Adiantamento.*
 		         FROM      ODPI  			AS Adiantamento
 		         LEFT JOIN RIN1	AS DevRecebido ON Adiantamento."DocEntry" = DevRecebido."BaseEntry"
@@ -147,7 +144,7 @@ SELECT
                        "OcrCode2",
                        "OcrCode3")
                   AdiantItem  ON Adiantamento."DocEntry"             = AdiantItem."DocEntry" 
-	LEFT JOIN DPI6		AS AdiantPrest    ON AdiantPrest."DocEntry"	 = RecebidoNota."DocEntry"AND	AdiantPrest."InstlmntID"	= RecebidoNota."InstId"
+	LEFT JOIN DPI6		AS AdiantPrest    ON RecebidoNota."DocEntry" = AdiantPrest."DocEntry"	   AND	AdiantPrest."InstlmntID"	= RecebidoNota."InstId"
 	LEFT JOIN OINV		AS NFSaida        ON RecebidoNota."DocEntry" = NFSaida."DocEntry" AND RecebidoNota."InvType"		= NFSaida."ObjType"
 	LEFT JOIN (SELECT "DocEntry",
    				     SUM("LineTotal") AS "OcrSoma",
@@ -159,13 +156,14 @@ SELECT
                        "OcrCode",
                        "OcrCode2",
                        "OcrCode3")
-                        AS NFSaidaItem  ON NFSaida."DocEntry"        = NFSaidaItem."DocEntry" 
-	LEFT JOIN INV6		AS NFSaidaPrest   ON NFSaidaPrest."DocEntry" = RecebidoNota."DocEntry" AND	NFSaidaPrest."InstlmntID"	= RecebidoNota."InstId"
+                        AS NFSaidaItem    ON NFSaida."DocEntry"        = NFSaidaItem."DocEntry" 
+	LEFT JOIN INV6		AS NFSaidaPrest   ON RecebidoNota."DocEntry" = NFSaidaPrest."DocEntry"  AND	NFSaidaPrest."InstlmntID"	= RecebidoNota."InstId"
+	LEFT JOIN  OJDT		AS LivroRazao     ON RecebidoNota."DocEntry" = LivroRazao."TransId" AND NFSaida."TransId" IS NULL AND Adiantamento."TransId" IS NULL	
+	LEFT JOIN  JDT1		AS LRItem         ON LivroRazao."TransId"	 = LRItem."TransId" AND LRItem."DebCred" = 'C'  AND LRItem."Credit" <> 0  
 	LEFT JOIN OBOE		AS Boleto         ON Recebido."BoeAbs" 	     = Boleto."BoeKey"			
 WHERE Recebido."Canceled" = 'N'
   AND (Boleto."BoeStatus" = 'P' OR
 	   Recebido."BoeAbs" IS NULL)
-  AND LRItem."SourceID" IS NOT NULL
   AND Recebido."CreditSum" = 0
   AND Recebido."CheckSum" = 0 
   AND RecebidoNota."InvType" IN ('30','13','203')

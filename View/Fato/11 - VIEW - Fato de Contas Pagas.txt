@@ -113,17 +113,17 @@ SELECT
 	   WHEN ContaPagaNota."InvType" 	= '18'  	THEN NFItem."OcrCode"
 	   WHEN ContaPagaNota."InvType"  	= '204' 	THEN AdiantItem."OcrCode"         
 	   WHEN ContaPagaNota."InvType" 	= '30'  	THEN LRItem."ProfitCode"
-	END AS "Localizacao",	
+	END AS "idLocalizacao",	
 	CASE
 	   WHEN ContaPagaNota."InvType" 	= '18'  	THEN NFItem."OcrCode2"
 	   WHEN ContaPagaNota."InvType" 	= '204' 	THEN AdiantItem."OcrCode2"         
 	   WHEN ContaPagaNota."InvType" 	= '30'  	THEN LRItem."OcrCode2"
-	END AS "Departamento",
+	END AS "idDepartamento",
 	CASE
 	   WHEN ContaPagaNota."InvType" 	= '18'  	THEN NFItem."OcrCode3"
 	   WHEN ContaPagaNota."InvType" 	= '204' 	THEN AdiantItem."OcrCode3"         
 	   WHEN ContaPagaNota."InvType" 	= '30'  	THEN LRItem."OcrCode3"
-	END AS "Natureza"
+	END AS "idNatureza"
 	FROM       VPM2 AS ContaPagaNota
 	INNER JOIN OVPM AS ContaPaga      ON ContaPaga."DocEntry" 	    = ContaPagaNota."DocNum"
 	LEFT  JOIN OPCH AS NFEntrada      ON ContaPagaNota."baseAbs"    = NFEntrada."DocEntry"	       AND NFEntrada."ObjType"	   = ContaPagaNota."InvType"

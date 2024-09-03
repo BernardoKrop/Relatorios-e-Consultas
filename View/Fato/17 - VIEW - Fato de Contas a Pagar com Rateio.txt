@@ -68,19 +68,19 @@ SELECT
 		WHEN LivroRazao."TransType" = '204' 	THEN AdiantamentoItem."OcrCode"
 		WHEN LivroRazao."TransType" = '30' 	THEN LivroRazaoItem."ProfitCode"
 		ELSE NULL
-	END AS "Unidade" 
+	END AS "idLocalizacao" 
 	, CASE
 		WHEN LivroRazao."TransType" = '18' 	THEN NFEntradaItem."OcrCode2"
 		WHEN LivroRazao."TransType" = '204' 	THEN AdiantamentoItem."OcrCode2"
 		WHEN LivroRazao."TransType" = '30' 	THEN LivroRazaoItem."OcrCode2"
 		ELSE NULL
-	END AS "Departamento" 
+	END AS "idDepartamento" 
 	, CASE
 		WHEN LivroRazao."TransType" = '18' 	THEN NFEntradaItem."OcrCode3"
 		WHEN LivroRazao."TransType" = '204' 	THEN AdiantamentoItem."OcrCode3"
 		WHEN LivroRazao."TransType" = '30' 	THEN LivroRazaoItem."OcrCode3"
 		ELSE NULL
-	END AS "Natureza" 
+	END AS "idNatureza" 
 FROM           "OJDT" LivroRazao 
     INNER JOIN "JDT1" LivroRazaoItem        ON LivroRazaoItem."TransId" = LivroRazao."TransId" 
     INNER JOIN "OCRD" Parceiro              ON LivroRazaoItem."ShortName" = Parceiro."CardCode" 

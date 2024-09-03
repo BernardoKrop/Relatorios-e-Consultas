@@ -17,9 +17,9 @@ SELECT NFSaida."BPLId"           AS "IdFilial",
        NFSaida."DocDate"         AS "DtLancamento",
        NFSaida."DocDueDate"      AS "DtVencimento",
        NFSaida."TaxDate"         AS "DtEmissao", 
-       NFSaidaItem."OcrCode"     AS "Unidade",	
-	   NFSaidaItem."OcrCode2"    AS "Departamento",	
-	   NFSaidaItem."OcrCode3"    AS "Natureza"
+       NFSaidaItem."OcrCode"     AS "idLocalizacao",	
+	   NFSaidaItem."OcrCode2"    AS "idDepartamento",	
+	   NFSaidaItem."OcrCode3"    AS "idNatureza"
   FROM       OINV NFSaida      
   INNER JOIN (SELECT "DocEntry",
    				     SUM("LineTotal") AS "OcrSoma",
@@ -53,9 +53,9 @@ SELECT LCMItem."BPLId" 		         AS "IdFilial",
        LCM."RefDate"                 AS "DtLancamento", 
        LCM."DueDate"                 AS "DtVencimento",
        LCM."TaxDate"                 AS "DtEmissao",
-       LCMItem."ProfitCode"          AS "Unidade",
-       LCMItem."OcrCode2"            AS "Departamento",
-       LCMItem."OcrCode3"            AS "Natureza"
+       LCMItem."ProfitCode"          AS "idLocalizacao",
+       LCMItem."OcrCode2"            AS "idDepartamento",
+       LCMItem."OcrCode3"            AS "idNatureza"
   FROM         JDT1 LCMItem  
     INNER JOIN OJDT LCM     ON LCMItem."TransId" = LCM."TransId" 
     INNER JOIN OCRD Cliente ON Cliente."CardCode" = LCMItem."ShortName" 
@@ -89,9 +89,9 @@ SELECT Adiantamento."BPLId"        AS "IdFilial",
        Adiantamento."DocDate"      AS "DtLancamento",
        Adiantamento."DocDueDate"   AS "DtVencimento",
        Adiantamento."TaxDate"      AS "DtEmissao",
-       AdiantItem."OcrCode"        AS "Unidade",	
-	   AdiantItem."OcrCode2"       AS "Departamento",	
-	   AdiantItem."OcrCode3"       AS "Natureza"
+       AdiantItem."OcrCode"        AS "idLocalizacao",	
+	   AdiantItem."OcrCode2"       AS "idDepartamento",	
+	   AdiantItem."OcrCode3"       AS "idNatureza"
   FROM ODPI Adiantamento 
   INNER JOIN (SELECT "DocEntry",
    				     SUM("LineTotal") AS "OcrSoma",
@@ -109,5 +109,3 @@ SELECT Adiantamento."BPLId"        AS "IdFilial",
 WHERE AdiantPrest."Status" = 'O' AND (AdiantPrest."InsTotal" - IFNULL(AdiantPrest."PaidToDate", 0) -
  IFNULL(AdiantPrest."TotalBlck", 0)) > 0 
 ORDER BY 11
-                             
- 
