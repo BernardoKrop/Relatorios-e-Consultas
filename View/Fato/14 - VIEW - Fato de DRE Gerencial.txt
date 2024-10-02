@@ -1,0 +1,60 @@
+CREATE VIEW "vw_fDREGerencial" ("Cod Tran",
+                                "Cod Filial",
+                                "Cod Parceiro",
+                                "Dt Emissão" ,
+                                "Dt Vencimento" ,
+                                "Dt Lançamento" ,
+                                "Cod Conta",
+                                "Tipo Origem",
+                                "Nr Origem",
+                                "Cod Item",
+                                "Debito",
+                                "Credito", 
+                                "Deb/Cred",
+                                "Localizacao",
+                                "Departamento",
+                                "Natureza",
+                                "Frota",
+                                "Obsrv Origem",
+                                "Cod Usuario") AS                                
+SELECT
+	LivroRazaoItem."TransId"                             AS "Cod Tran",
+	LivroRazaoItem."BPLId"            					 AS "Cod Filial" ,
+	Origem."CardCode"                                    AS "Cod Parceiro",
+	TO_DATE(LivroRazaoItem."TaxDate") 				 	 AS "Dt Emissão" , 
+	TO_DATE(LivroRazaoItem."DueDate")                    AS "Dt Vencimento" ,
+	TO_DATE(LivroRazaoItem."RefDate")                    AS "Dt Lançamento" ,
+	COALESCE(Origem."AcctCode",LivroRazaoItem."Account") AS "Cod Conta",
+	COALESCE(Origem."TipoOrigem",'LC Manual') 			 AS "Tipo Origem",
+	Origem."DocNum"                                      AS "Nr Origem",
+	Origem."ItemCode"                                    AS "Cod Item",
+	CASE 
+	  WHEN Origem."DocEntry" IS NOT NULL THEN
+	    (Origem."LineTotal" / SUM(Origem."LineTotal") 
+	       OVER (PARTITION BY Origem."DocEntry",LivroRazaoItem."Line_ID")) * LivroRazaoItem."Debit"
+	  ELSE LivroRazaoItem."Debit"
+	END                                   AS "Debito",
+	CASE 
+	  WHEN Origem."DocEntry" IS NOT NULL THEN
+	    (Origem."LineTotal" / SUM(Origem."LineTotal") 
+	       OVER (PARTITION BY Origem."DocEntry",LivroRazaoItem."Line_ID")) * LivroRazaoItem."Credit"
+	  ELSE LivroRazaoItem."Credit"
+	END                                   AS "Credito", 
+	LivroRazaoItem."DebCred"                                AS "Deb/Cred",
+	COALESCE(ORIGEM."OcrCode", LivroRazaoItem."ProfitCode") AS "Localizacao",
+	COALESCE(ORIGEM."OcrCode2",LivroRazaoItem."OcrCode2")   AS "Departamento" ,
+	COALESCE(ORIGEM."OcrCode3",LivroRazaoItem."OcrCode3")   AS "Natureza",
+	COALESCE(ORIGEM."OcrCode4",LivroRazaoItem."OcrCode4")   AS "Frota",
+	Origem."Comments"                                       AS "Obsrv Origem",
+	LivroRazao."UserSign"                                   AS "Cod Usuario"
+FROM       OJDT LivroRazao
+INNER JOIN JDT1 LivroRazaoItem 
+  ON LivroRazao."TransId" = LivroRazaoItem."TransId"
+LEFT JOIN vw_fOrigensLR Origem
+  ON  LivroRazao."TransId"   = Origem."TransId"
+  AND LivroRazao."TransType" = Origem."ObjType"
+WHERE (Origem."CANCELED" IS NULL OR
+       Origem."CANCELED" = 'N')
+AND LivroRazao."TransType" IN (13,14,15,18,19,203,204,59,60,30)
+AND (LivroRazao."TransId" = 30 OR
+     Origem."TransId" IS NOT NULL)

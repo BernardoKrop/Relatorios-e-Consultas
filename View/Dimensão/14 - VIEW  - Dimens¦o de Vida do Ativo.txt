@@ -1,25 +1,4 @@
------------------------------------------------------------------------------------ 
---		      					Dados de Ativos
------------------------------------------------------------------------------------
--- CRIADO POR: 				07/02/2024		JOHNSON WESLEY HRENECHEN	
--- ( I ) ATUALIZADO POR: 	08/02/2024		JOHNSON WESLEY HRENECHEN
---			LOG: Foi identificado erros de dupicação na ITM7 para tratar e ITM8 esta trazendo linhas canceladas, sendo tratadas pela coluna de quantity <> 0.
--- ( II ) ATUALIZADO POR: 
---			LOG:
-
--- OBJETIVO: Dimensionalizar os dados de vida dos ativos.
--- DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
--- SCHEMA: SBOTRUSTAGRO
--- OBS: Esta dimensão é a união de multiplas dimensões, mesmo não ferindo a lógica de dimensionalidade, ela certamente será menos prática para usar no BI
--- do que uma versão mais normalizada e mais códigos, tendo em vista que mudanças na dimensão não possuem registro histórico de novos fatos, a pouco impacto real em não usar esta estrutura.
-
--- Iniciando a transação e definindo o esquema para a consulta
-
-BEGIN TRANSACTION ;
-SET SCHEMA SBOTRUSTAGRO ;
-
--- Criando uma visão para uso no Power BI
-	CREATE VIEW "SBOTRUSTAGRO"."vw_dDados_Ativos"
+CREATE OR REPLACE VIEW "SBOTRUSTAGRO"."vw_dDados_Ativos"
 		(
 		"Cod_Ativo"				,
 		"Nome_Ativo"			,
@@ -79,11 +58,12 @@ SELECT
 			    ON Item."AssetClass" = ClasseAtivo."Code"
 			LEFT JOIN OITB AS GrupoItem
 				ON Item."ItmsGrpCod" = GrupoItem."ItmsGrpCod"
-			WHERE
+			WHERE GrupoItem."ItmsGrpCod" = 163/*
 			    Local."Location" <> 'ITEM VIRTUAL'  -- ITEM VIRTUAL É A LOCALIZAÇÃO USADA PARA AQUISIÇÃO DO ATIVO PELO COMPRAS, SENDO POSTERIORMENTE RECRIADO SOB NOVO CÓDIGO.
 				AND Item."Canceled" = 'N'
 				--AND	Item."ItemCode" = 'IMB00853' -- Qntd 0 e APC 0, se trocar Right por Inner, deve eliminar a necessidade de Quantity e permitir a exposição deles.
 				AND SaldoDepreciacao."Quantity" <> 0 -- ITM8 possui itens cancelados constando como normais, devendo ser filtrados por esta linha
+				--AND NOT Item."ItemCode" LIKE '%IMB%' */
 			GROUP BY -- Necessidade de dar Group By, devido a tabela Depreciacao ( ITM7 ) devido ter erro de calculo em suas colunas calculadas.
 				Item."ItemCode"				,
 				Item."ItemName"				,
@@ -100,8 +80,8 @@ SELECT
 				Local."Location"				,
 				Colaborador."firstName"		,
 				Colaborador."middleName"		,
-				Colaborador."lastName"			;
-				
+				Colaborador."lastName",
+			    GrupoItem."ItmsGrpCod";
 
 								
 -- Concluir a transação

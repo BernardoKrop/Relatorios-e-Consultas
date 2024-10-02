@@ -100,9 +100,9 @@ SELECT
 	END AS "Conta"  --Conta Contabil
 
 	, CASE
-		WHEN Recebido."TrsfrSum"	> 0 	THEN (SELECT Banco."Account" FROM DSC1 AS Banco WHERE Banco."GLAccount" = Recebido."TrsfrAcct" ) 
-		WHEN Recebido."CashSum"		> 0 	THEN (SELECT Banco."Account" FROM DSC1 AS Banco WHERE Banco."GLAccount" = Recebido."CashAcct" )
-		WHEN Recebido."CheckSum" 	> 0 	THEN (SELECT Banco."Account" FROM DSC1 AS Banco WHERE Banco."GLAccount" = Recebido."CheckAcct" )
+		WHEN Recebido."TrsfrSum"	> 0 	THEN (SELECT dPlanoDeContas."AcctName" FROM OACT AS dPlanoDeContas WHERE dPlanoDeContas."AcctCode" = Recebido."TrsfrAcct")
+		WHEN Recebido."CashSum"		> 0 	THEN (SELECT dPlanoDeContas."AcctName" FROM OACT AS dPlanoDeContas WHERE dPlanoDeContas."AcctCode" = Recebido."CashAcct")
+		WHEN Recebido."CheckSum" 	> 0 	THEN (SELECT dPlanoDeContas."AcctName" FROM OACT AS dPlanoDeContas WHERE dPlanoDeContas."AcctCode" = Recebido."CheckAcct")
 		WHEN Recebido."BoeSum" 		> 0 	THEN Boleto."BPBankNam" || ' - AG ' || Boleto."BPBankBrnc" || ' - C/C ' || Boleto."BPBankAct" 
 	END AS "Banco"  --Banco da movimentação
 	, CASE

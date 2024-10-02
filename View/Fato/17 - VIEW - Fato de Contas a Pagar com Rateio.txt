@@ -9,7 +9,12 @@ SELECT
 	, CASE
 		WHEN LivroRazao."TransType" = '18' 	THEN NFEntrada."CardCode"
 		WHEN LivroRazao."TransType" = '204'	THEN Adiantamento."CardCode" 
-		WHEN LivroRazao."TransType" = '30' 	THEN LivroRazaoItem."Ref1"
+		
+		WHEN LivroRazao."TransType" = '30' 	THEN CASE 
+                                                   WHEN LivroRazaoItem."ShortName" LIKE 'FOR%' THEN LivroRazaoItem."ShortName"
+                                                   WHEN LivroRazaoItem."ContraAct" LIKE 'FOR%' THEN LivroRazaoItem."ContraAct"
+                                                   ELSE NULL
+                                                 END
 	END AS "idParceiro"    
     , CASE
         WHEN LivroRazao."TransType" = '18'  	THEN 'NF' 						-- Nota Fiscal

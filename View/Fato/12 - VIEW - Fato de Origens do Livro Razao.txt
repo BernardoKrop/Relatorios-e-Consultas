@@ -1,0 +1,244 @@
+ALTER VIEW vw_fOrigensLR("TransId",
+					      "ObjType",
+					      "DocEntry",
+					      "DocNum",
+					      "CardCode",
+					      "CardName",
+					      "DocStatus",
+					      "ItemCode",
+					      "LineTotal",
+					      "Quantity",
+					      "AcctCode",
+					      "OcrCode",
+					      "OcrCode2",
+					      "OcrCode3",
+					      "OcrCode4",
+					      "TipoOrigem",
+					      "Comments",
+					      "CANCELED"   ) as
+------------------------Saídas--------------------------------
+SELECT NFSaida."TransId",
+       NFSaida."ObjType",
+       NFSaida."DocEntry",
+       NFSaida."DocNum",
+       NFSaida."CardCode",
+       NFSaida."CardName",
+       NFSaida."DocStatus",
+       NFSaidaItem."ItemCode",
+       NFSaidaItem."LineTotal",
+       NFSaidaItem."Quantity",
+       NFSaidaItem."AcctCode",
+       NFSaidaItem."OcrCode",
+       NFSaidaItem."OcrCode2",
+       NFSaidaItem."OcrCode3",
+       NFSaidaItem."OcrCode4",
+       'NF Saída' AS "TipoOrigem",
+       NFSaida."Comments",
+       NFSaida."CANCELED"                                       --Nota de Saída
+  FROM       OINV NFSaida
+  INNER JOIN INV1 NFSaidaItem 
+    ON NFSaida."DocEntry" = NFSaidaItem."DocEntry"
+WHERE NFSaida."TransId" IS NOT NULL
+    
+	UNION ALL
+
+SELECT ADCliente."TransId",
+       ADCliente."ObjType",
+       ADCliente."DocEntry",
+       ADCliente."DocNum",
+       ADCliente."CardCode",
+       ADCliente."CardName",
+       ADCliente."DocStatus",
+       ADCleinteItem."ItemCode",
+       ADCleinteItem."LineTotal",
+       ADCleinteItem."Quantity",
+       ADCleinteItem."AcctCode",
+       ADCleinteItem."OcrCode",
+       ADCleinteItem."OcrCode2",
+       ADCleinteItem."OcrCode3",
+       ADCleinteItem."OcrCode4",
+       'AD Cli' AS "TipoOrigem",
+       ADCliente."Comments",
+       ADCliente."CANCELED"                                   --Adiantamento de cleinte
+  FROM       ODPI ADCliente
+  INNER JOIN DPI1 ADCleinteItem
+    ON ADCliente."DocEntry" = ADCleinteItem."DocEntry"
+WHERE ADCliente."TransId" IS NOT NULL
+  AND ADCliente."DocEntry" NOT IN (SELECT "BaseAbs" FROM INV11)
+    
+	UNION ALL
+
+SELECT DevNFSaida."TransId",
+       DevNFSaida."ObjType",
+       DevNFSaida."DocEntry",
+       DevNFSaida."DocNum",
+       DevNFSaida."CardCode",
+       DevNFSaida."CardName",
+       DevNFSaida."DocStatus",
+       DevNFSaidaItem."ItemCode",
+       DevNFSaidaItem."LineTotal",
+       DevNFSaidaItem."Quantity",
+       DevNFSaidaItem."AcctCode",
+       DevNFSaidaItem."OcrCode",
+       DevNFSaidaItem."OcrCode2",
+       DevNFSaidaItem."OcrCode3",
+       DevNFSaidaItem."OcrCode4",
+       'Dev Saída' AS "TipoOrigem",
+       DevNFSaida."Comments",
+       DevNFSaida."CANCELED" 
+  FROM       ORIN DevNFSaida
+  INNER JOIN RIN1 DevNFSaidaItem                                --Devolução de NF de saida(Questionável)
+    ON DevNFSaida."DocEntry" = DevNFSaidaItem."DocEntry"
+WHERE DevNFSaida."TransId" IS NOT NULL
+ 
+	UNION ALL
+
+SELECT EntregaMerc."TransId",
+       EntregaMerc."ObjType",
+       EntregaMerc."DocEntry",
+       EntregaMerc."DocNum",
+       EntregaMerc."CardCode",
+       EntregaMerc."CardName",
+       EntregaMerc."DocStatus",
+       EntregaMercItem."ItemCode",
+       EntregaMercItem."LineTotal",
+       EntregaMercItem."Quantity",
+       EntregaMercItem."AcctCode",
+       EntregaMercItem."OcrCode",
+       EntregaMercItem."OcrCode2",
+       EntregaMercItem."OcrCode3",
+       EntregaMercItem."OcrCode4",
+       'Entrega' AS "TipoOrigem",
+       EntregaMerc."Comments",
+       EntregaMerc."CANCELED"                                   --Entrega de mercadoria
+  FROM       ODLN EntregaMerc
+  INNER JOIN DLN1 EntregaMercItem                              
+    ON EntregaMerc."DocEntry" = EntregaMercItem."DocEntry"
+WHERE EntregaMerc."TransId" IS NOT NULL
+    
+	UNION ALL 
+
+SELECT SaidaMerc."TransId",
+       SaidaMerc."ObjType",
+       SaidaMerc."DocEntry",
+       SaidaMerc."DocNum",
+       SaidaMerc."CardCode",
+       SaidaMerc."CardName",
+       'C'        AS "DocStatus",
+       SaidaMercItem."ItemCode",
+       SaidaMercItem."LineTotal",
+       SaidaMercItem."Quantity",
+       SaidaMercItem."AcctCode",
+       SaidaMercItem."OcrCode",
+       SaidaMercItem."OcrCode2",
+       SaidaMercItem."OcrCode3",
+       SaidaMercItem."OcrCode4",
+       'Saída Merc' AS "TipoOrigem",
+       SaidaMerc."Comments",
+       SaidaMerc."CANCELED" 
+  FROM       OIGE SaidaMerc
+  INNER JOIN IGE1 SaidaMercItem                               --Saída de mercadoria
+    ON SaidaMerc."DocEntry" = SaidaMercItem."DocEntry"
+WHERE SaidaMerc."TransId" IS NOT NULL
+  
+	UNION ALL
+------------------------Entradas-----------------------------------
+SELECT NFEntrada."TransId",
+       NFEntrada."ObjType",
+       NFEntrada."DocEntry",
+       NFEntrada."DocNum",
+       NFEntrada."CardCode",
+       NFEntrada."CardName",
+       NFEntrada."DocStatus",
+       NFEntradaItem."ItemCode",
+       NFEntradaItem."LineTotal",
+       NFEntradaItem."Quantity",
+       NFEntradaItem."AcctCode",
+       NFEntradaItem."OcrCode",
+       NFEntradaItem."OcrCode2",
+       NFEntradaItem."OcrCode3",
+       NFEntradaItem."OcrCode4",
+       'NF Entrada' AS "TipoOrigem",
+       NFEntrada."Comments",
+       NFEntrada."CANCELED" 
+  FROM       OPCH NFEntrada
+  INNER JOIN PCH1 NFEntradaItem                                 --Nota de entrada
+    ON NFEntrada."DocEntry" = NFEntradaItem."DocEntry"
+WHERE NFEntrada."TransId" IS NOT NULL
+    
+	UNION ALL
+
+SELECT ADFornecedor."TransId",
+       ADFornecedor."ObjType",
+       ADFornecedor."DocEntry",
+       ADFornecedor."DocNum",
+       ADFornecedor."CardCode",
+       ADFornecedor."CardName",
+       ADFornecedor."DocStatus",
+       ADFornecedorItem."ItemCode",
+       ADFornecedorItem."LineTotal",
+       ADFornecedorItem."Quantity",
+       ADFornecedorItem."AcctCode",
+       ADFornecedorItem."OcrCode",
+       ADFornecedorItem."OcrCode2",
+       ADFornecedorItem."OcrCode3",
+       ADFornecedorItem."OcrCode4",
+       'AD For' AS "TipoOrigem",
+       ADFornecedor."Comments",
+       ADFornecedor."CANCELED"                                 --Adiantamento de Fornecedor
+  FROM       ODPO ADFornecedor
+  INNER JOIN DPO1 ADFornecedorItem
+    ON ADFornecedor."DocEntry" = ADFornecedorItem."DocEntry"
+WHERE ADFornecedor."TransId" IS NOT NULL
+  AND ADFornecedor."DocEntry" NOT IN (SELECT "BaseAbs" FROM PCH11)
+    
+	UNION ALL 
+
+SELECT DevNFEntrada."TransId",
+       DevNFEntrada."ObjType",
+       DevNFEntrada."DocEntry",
+       DevNFEntrada."DocNum",
+       DevNFEntrada."CardCode",
+       DevNFEntrada."CardName",
+       DevNFEntrada."DocStatus",
+       DevNFEntradaItem."ItemCode",
+       DevNFEntradaItem."LineTotal",
+       DevNFEntradaItem."Quantity",
+       DevNFEntradaItem."AcctCode",
+       DevNFEntradaItem."OcrCode",
+       DevNFEntradaItem."OcrCode2",
+       DevNFEntradaItem."OcrCode3",
+       DevNFEntradaItem."OcrCode4",
+       'Dev Entrada' AS "TipoOrigem",
+       DevNFEntrada."Comments",
+       DevNFEntrada."CANCELED" 
+  FROM       ORPC DevNFEntrada
+  INNER JOIN RPC1 DevNFEntradaItem                               --Devolução de nota de Entrada(Questionável)
+    ON DevNFEntrada."DocEntry" = DevNFEntradaItem."DocEntry"
+WHERE DevNFEntrada."TransId" IS NOT NULL
+ 
+	UNION ALL
+
+SELECT EntradaMerc."TransId",
+       EntradaMerc."ObjType",
+       EntradaMerc."DocEntry",
+       EntradaMerc."DocNum",
+       EntradaMerc."CardCode",
+       EntradaMerc."CardName",
+       'C'         AS "DocStatus",
+       EntradaMercItem."ItemCode",
+       EntradaMercItem."LineTotal",
+       EntradaMercItem."Quantity",
+       EntradaMercItem."AcctCode",
+       EntradaMercItem."OcrCode",
+       EntradaMercItem."OcrCode2",
+       EntradaMercItem."OcrCode3",
+       EntradaMercItem."OcrCode4",
+       'Entrada Merc' AS "TipoOrigem",
+       EntradaMerc."Comments",
+       EntradaMerc."CANCELED" 
+  FROM       OIGN EntradaMerc
+  INNER JOIN IGN1 EntradaMercItem                               --Entrada de Mercadoria
+    ON EntradaMerc."DocEntry" = EntradaMercItem."DocEntry"
+WHERE EntradaMerc."TransId" IS NOT NULL
+
