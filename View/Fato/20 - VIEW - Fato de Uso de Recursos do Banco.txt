@@ -1,0 +1,13 @@
+CREATE OR REPLACE VIEW "vw_fRecursosDB" AS 
+  SELECT TO_DATE(DATA_LOG)     AS "Data",
+         DISCO_TAMANHO_TOTAL   AS "EspacoTotalDisco",
+         DISCO_TAMANHO_USADO   AS "EspacoUsadoDisco",
+         DISCO_TAMANHO_DATA    AS "EspacoData",
+         DISCO_TAMANHO_LOG     AS "EspacoLog",
+         DISCO_TAMANHO_TRACE   AS "EspacoTrace",
+         MEMORIA_MEDIA_USADA   AS "UsoMedioRAM",
+         MEMORIA_PICO_USADA    AS "PicoUsoRAM",
+         MEMORIA_MEDIANA_USADA AS "UsoMedianoRAM",
+         MEMORIA_MINIMA_USADA  AS "UsoMinimoRAM",
+         MEMORIA_MAXIMA_USADA  AS "UsoMaximoRAM"
+    FROM "SBOTRUSTAGRO".LOG_RECURSOS_SISTEMA
