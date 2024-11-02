@@ -17,102 +17,130 @@
 
 -- Iniciando a transação
 
-BEGIN TRANSACTION;
-SET SCHEMA SBOTRUSTAGRO;
+CREATE OR REPLACE VIEW "SBOTRUSTAGRO"."vw_fPedido" AS 
+SELECT
+	Pedido."DocEntry"									    AS "CodEntrada",       -- Código único de entrada do documento, identificador principal do pedido
+	Pedido."ObjType"									    AS "TipoObjeto",       -- Tipo de objeto, distingue entre pedidos de compra e venda
+	Pedido."DocNum" 									    AS "CodInterno",       -- Número interno do documento, número de controle do pedido			
+	COALESCE ( PedidoItemExtendida."MainUsage" , '-1' )	    AS "CodUtilidade",     -- Flag interna para indicar a utilidade ou CFOP do item, valor padrão '-1' se não houver
+	Pedido."DocStatus"								        AS "Status",           -- Status do pedido, mostra se o pedido está ativo, fechado, etc.
+	TO_TIMESTAMP(
+		TO_VARCHAR(Pedido."DocDate", 'YYYYMMDD') || ' ' ||
+		LPAD(TO_VARCHAR(Pedido."DocTime"), 4, '0') ,
+	  'YYYYMMDD HH24MI') 								    AS "DtHrLancamento",   -- Data e hora do lançamento do pedido, composto de DocDate e DocTime
+	CAST ( Pedido."DocDueDate" AS DATE )			        AS "DtVencimento",     -- Data de vencimento do pedido
+	TO_TIMESTAMP(
+		TO_VARCHAR(Pedido."UpdateDate", 'YYYYMMDD') || ' ' ||
+		LPAD(TO_VARCHAR(Pedido."UpdateTS"), 6, '0') ,
+	  'YYYYMMDD HH24MISS') 							    	AS "DtHrAtualizacao",  -- Data e hora da última atualização do pedido
+	CAST ( Pedido."TaxDate" AS DATE )				        AS "DtEmissao",        -- Data de emissão fiscal do pedido			
+	Pedido."CardCode"							            AS "CodFornecedor",    -- Código do fornecedor ou cliente do pedido				
+	PedidoItem."ItemCode" 							        AS "CodItem",          -- Código do item no pedido
+	SUM ( PedidoItem."Quantity" )					        AS "VolumeTotal",      -- Quantidade total do item no pedido, calculado por agrupamento
+	PedidoItem."Price" 								        AS "Preco",            -- Preço unitário do item no pedido		
+	( ( PedidoItem."LineTotal" / ( SUM( PedidoItem."LineTotal" ) OVER (PARTITION BY Pedido."DocNum" ) ) ) *
+		COALESCE ( Pedido."DiscSum" , 0 ) ) 				AS "ValorDescontoRateio", -- Valor do desconto aplicado ao item com base no total do pedido
+	Pedido."OwnerCode"								        AS "CodTitular",       -- Código do titular do pedido
+	Pedido."BPLId"									        AS "CodFilial",        -- Código da filial que originou o pedido				
+	PedidoItem."OcrCode"                        		    AS "CodUnidade",       -- Código da unidade organizacional associada ao item	
+	PedidoItem."OcrCode2"                       		    AS "CodDepartamento",  -- Departamento responsável pelo item no pedido		
+	Pedido."Comments"				      				    AS "Comentarios",      -- Comentários adicionais sobre o pedido
+	PedidoItem."BaseEntry"							        AS "BaseEntrada_Cod",  -- Código de entrada base para conexão com outra solicitação relacionada
+	Pedido."U_TR_TipSol"								    AS "TipoPedidoItem"    -- Tipo do pedido, como regularização ou compra
+	FROM       OPOR AS Pedido
+	INNER JOIN POR1	 AS PedidoItem          ON Pedido."DocEntry" = PedidoItem."DocEntry"
+	INNER JOIN POR12 AS PedidoItemExtendida ON Pedido."DocEntry" = PedidoItemExtendida."DocEntry"	
+	WHERE
+		Pedido."CANCELED" = 'N'	                            -- Exclui pedidos cancelados, 'N' significa não cancelado e 'Y' cancelado
+	GROUP BY 
+		Pedido."DocNum" 	
+		, PedidoItem."LineTotal"
+		, Pedido."DiscSum"
+		, PedidoItem."Price"
+		, Pedido."TaxDate"	
+		, Pedido."DocDate" 		
+		, Pedido."ReqDate" 	
+		, Pedido."ObjType"		
+		, Pedido."OwnerCode" 	
+		, Pedido."DocStatus" 	
+		, Pedido."BPLId"		
+		, PedidoItem."OcrCode"		
+		, PedidoItem."OcrCode2"
+		, Pedido."Comments"
+		, PedidoItemExtendida."MainUsage"	
+		, PedidoItem."BaseEntry"
+		, Pedido."DocEntry"
+		, Pedido."ReqName"
+		, Pedido."CardCode"
+		, Pedido."UpdateTS"
+		, Pedido."UpdateDate"
+		, Pedido."DocTime"
+		, Pedido."DocDueDate"
+		, PedidoItem."ItemCode"
+		, Pedido."U_TR_TipSol"	
+	
+UNION ALL
 
-ALTER VIEW "SBOTRUSTAGRO"."vw_fPedidoItem"
-	(
-	"Entrada_Cod" 	
-	, "Objeto_Tipo"		
-	, "Interno_Cod"
-	, "Utilidade_Cod"
-	, "Status" 
-	, "Dt_Hrs_Lancamento" 
-	, "Dt_Vencimento"
-	, "Dt_Hrs_Atualizacao"
-	, "Dt_Emissao"
-	, "Fornecedor_Cod"
-	, "Item_Cod"
-	, "Volume Total"
-	, "Preço"
-	, "Valor_DescontoRateio"
-	, "Titular"
-	, "Filial"
-	, "Unidade"
-	, "Departamento" 
-	, "Comentarios"
-	, "BaseEntrada_Cod"
-	, "Tipo_PedidoItem"
-	) AS 
-			SELECT
-				PedidoItem."DocEntry"									AS "Entrada_Cod"
-				, PedidoItem."ObjType"									AS "Objeto_Tipo"
-				, PedidoItem."DocNum" 									AS "Interno_Cod" 				
-				, COALESCE ( fPedidoItemExtendida."MainUsage" , '-1' )	AS "Utilidade_Cod" --Flag interna para indicar CFOP
-				, PedidoItem."DocStatus"								AS "Status"
-				, TO_TIMESTAMP(
-		  			TO_VARCHAR(PedidoItem."DocDate", 'YYYYMMDD') || ' ' ||
-		    		LPAD(TO_VARCHAR(PedidoItem."DocTime"), 4, '0') ,
-		    	  'YYYYMMDD HH24MI') 								AS "Dt_Hrs_Lancamento"
-		    	, CAST 	( PedidoItem."DocDueDate" AS DATE )			AS "Dt_Vencimento" 
-		    	, TO_TIMESTAMP(
-		  			TO_VARCHAR(PedidoItem."UpdateDate", 'YYYYMMDD') || ' ' ||
-		    		LPAD(TO_VARCHAR(PedidoItem."UpdateTS"), 6, '0') ,
-		    	  'YYYYMMDD HH24MISS') 								AS "Dt_Hrs_Atualizacao"	
-		    	, CAST 	( PedidoItem."TaxDate" AS DATE )				AS "Dt_Emissao"   			
-				, PedidoItem."CardCode"								AS "Fornecedor_Cod" 				
-				, fPedidoItem."ItemCode" 								AS "Item_Cod"
-				, SUM ( fPedidoItem."Quantity" )						AS "Volume_Total"
-				, fPedidoItem."Price" 									AS "Preco"		
-				, ( ( fPedidoItem."LineTotal" / ( SUM( fPedidoItem."LineTotal" ) OVER (PARTITION BY PedidoItem."DocNum" ) ) ) *
-					COALESCE ( PedidoItem."DiscSum" , 0 ) ) 			AS "Valor_DescontoRateio" --Desconto					
-				, PedidoItem."OwnerCode"								AS "Titular"					
-				, PedidoItem."BPLId"									AS "Filial"						
-				, fPedidoItem."OcrCode"                        			AS "Unidade"	
-				, fPedidoItem."OcrCode2"                       			AS "Departamento"            					
-				, PedidoItem."Comments"								AS "Comentarios"
-				, fPedidoItem."BaseEntry"								AS "BaseEntrada_Cod" -- Conecta-se ao DocNum da solicitação.
-				, PedidoItem."U_TR_TipSol"								AS "Tipo_PedidoItem" --Reg Regularização Normal - Compra
-						
-				FROM
-					OPOR										AS PedidoItem
-					INNER JOIN POR1 							AS fPedidoItem
-						ON 	PedidoItem."DocEntry" = fPedidoItem."DocEntry"
-					INNER JOIN POR12							AS fPedidoItemExtendida
-						ON 	PedidoItem."DocEntry" = fPedidoItemExtendida."DocEntry"	
-				WHERE
-					PedidoItem."CANCELED" = 'N'	--N é não e Y é sim (foi cancelado)
-				GROUP BY 
-					PedidoItem."DocNum" 	
-					, fPedidoItem."LineTotal"
-					, PedidoItem."DiscSum"
-					, PedidoItem."DiscSum"
-					, fPedidoItem."Price"
-					, PedidoItem."TaxDate"	
-					, PedidoItem."DocDate" 		
-					, PedidoItem."ReqDate" 	
-					, PedidoItem."ObjType"		
-					, PedidoItem."OwnerCode" 	
-					, PedidoItem."DocStatus" 	
-					, PedidoItem."BPLId"		
-					, fPedidoItem."OcrCode"		
-					, fPedidoItem."OcrCode2"
-					, PedidoItem."Comments"
-					, fPedidoItemExtendida."MainUsage"	
-					, fPedidoItem."BaseEntry"
-					, PedidoItem."DocEntry"
-					, PedidoItem."ReqName"
-					, PedidoItem."CardCode"
-					, PedidoItem."UpdateTS"
-					, PedidoItem."UpdateDate"
-					, PedidoItem."DocTime"
-					, PedidoItem."DocDueDate"
-					, fPedidoItem."ItemCode"
-					, PedidoItem."U_TR_TipSol"	
-				ORDER BY
-					PedidoItem."DocNum" DESC ;
+SELECT
+	Pedido."DocEntry"									    AS "CodEntrada",       -- Código único de entrada do documento, identificador principal do pedido
+	Pedido."ObjType"									    AS "TipoObjeto",       -- Tipo de objeto, distingue entre pedidos de compra e venda
+	Pedido."DocNum" 									    AS "CodInterno",       -- Número interno do documento, número de controle do pedido			
+	COALESCE ( PedidoItemExtendida."MainUsage" , '-1' )	    AS "CodUtilidade",     -- Flag interna para indicar a utilidade ou CFOP do item, valor padrão '-1' se não houver
+	Pedido."DocStatus"								        AS "Status",           -- Status do pedido, mostra se o pedido está ativo, fechado, etc.
+	TO_TIMESTAMP(
+		TO_VARCHAR(Pedido."DocDate", 'YYYYMMDD') || ' ' ||
+		LPAD(TO_VARCHAR(Pedido."DocTime"), 4, '0') ,
+	  'YYYYMMDD HH24MI') 								    AS "DtHrLancamento",   -- Data e hora do lançamento do pedido, composto de DocDate e DocTime
+	CAST ( Pedido."DocDueDate" AS DATE )			        AS "DtVencimento",     -- Data de vencimento do pedido
+	TO_TIMESTAMP(
+		TO_VARCHAR(Pedido."UpdateDate", 'YYYYMMDD') || ' ' ||
+		LPAD(TO_VARCHAR(Pedido."UpdateTS"), 6, '0') ,
+	  'YYYYMMDD HH24MISS') 							    	AS "DtHrAtualizacao",  -- Data e hora da última atualização do pedido
+	CAST ( Pedido."TaxDate" AS DATE )				        AS "DtEmissao",        -- Data de emissão fiscal do pedido			
+	Pedido."CardCode"							            AS "CodFornecedor",    -- Código do fornecedor ou cliente do pedido				
+	PedidoItem."ItemCode" 							        AS "CodItem",          -- Código do item no pedido
+	SUM ( PedidoItem."Quantity" )					        AS "VolumeTotal",      -- Quantidade total do item no pedido, calculado por agrupamento
+	PedidoItem."Price" 								        AS "Preco",            -- Preço unitário do item no pedido		
+	( ( PedidoItem."LineTotal" / ( SUM( PedidoItem."LineTotal" ) OVER (PARTITION BY Pedido."DocNum" ) ) ) *
+		COALESCE ( Pedido."DiscSum" , 0 ) ) 				AS "ValorDescontoRateio", -- Valor do desconto aplicado ao item com base no total do pedido
+	Pedido."OwnerCode"								        AS "CodTitular",       -- Código do titular do pedido
+	Pedido."BPLId"									        AS "CodFilial",        -- Código da filial que originou o pedido				
+	PedidoItem."OcrCode"                        		    AS "CodUnidade",       -- Código da unidade organizacional associada ao item	
+	PedidoItem."OcrCode2"                       		    AS "CodDepartamento",  -- Departamento responsável pelo item no pedido		
+	Pedido."Comments"				      				    AS "Comentarios",      -- Comentários adicionais sobre o pedido
+	PedidoItem."BaseEntry"							        AS "BaseEntrada_Cod",  -- Código de entrada base para conexão com outra solicitação relacionada
+	Pedido."U_TR_TipSol"								    AS "TipoPedidoItem"    -- Tipo do pedido, como regularização ou compra
+	FROM       ORDR AS Pedido
+	INNER JOIN RDR1	 AS PedidoItem          ON Pedido."DocEntry" = PedidoItem."DocEntry"
+	INNER JOIN RDR12 AS PedidoItemExtendida ON Pedido."DocEntry" = PedidoItemExtendida."DocEntry"	
+	WHERE
+		Pedido."CANCELED" = 'N'	                            -- Exclui pedidos cancelados, 'N' significa não cancelado e 'Y' cancelado
+	GROUP BY 
+		Pedido."DocNum" 	
+		, PedidoItem."LineTotal"
+		, Pedido."DiscSum"
+		, PedidoItem."Price"
+		, Pedido."TaxDate"	
+		, Pedido."DocDate" 		
+		, Pedido."ReqDate" 	
+		, Pedido."ObjType"		
+		, Pedido."OwnerCode" 	
+		, Pedido."DocStatus" 	
+		, Pedido."BPLId"		
+		, PedidoItem."OcrCode"		
+		, PedidoItem."OcrCode2"
+		, Pedido."Comments"
+		, PedidoItemExtendida."MainUsage"	
+		, PedidoItem."BaseEntry"
+		, Pedido."DocEntry"
+		, Pedido."ReqName"
+		, Pedido."CardCode"
+		, Pedido."UpdateTS"
+		, Pedido."UpdateDate"
+		, Pedido."DocTime"
+		, Pedido."DocDueDate"
+		, PedidoItem."ItemCode"
+		, Pedido."U_TR_TipSol"	
+		
+ORDER BY "CodInterno" DESC;
 
--- Concluir a transação
-	 COMMIT;
--- Caso algo dê errado, desfazer todas as operações da transação, não pode ser feito após o COMMIT.
--- ROLLBACK;
