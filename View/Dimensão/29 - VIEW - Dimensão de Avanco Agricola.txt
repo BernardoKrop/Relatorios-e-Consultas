@@ -1,0 +1,18 @@
+CREATE OR REPLACE VIEW "vw_dAgriAvaco" AS 
+SELECT DISTINCT 
+       CASE Ordem."U_Avanco"
+       	 WHEN '' THEN 'NI'
+       	 ELSE Ordem."U_Avanco"
+       END AS "CodAvanco",
+       
+       CASE "U_Avanco" 
+	   	 WHEN 'D' THEN 'Em Análise'
+	   	 WHEN 'P' THEN 'Aguardando Peça'
+	   	 WHEN 'S' THEN 'Aguardando Serviço'
+	   	 WHEN 'E' THEN 'Em Execução'
+	   	 WHEN 'F' THEN 'Finalizada'
+	   	 WHEN 'N' THEN 'Aguardando NF do Forncedor'
+	   	 WHEN ''  THEN 'Não Informado'
+	   	 ELSE 'Não Informado'
+	   END                       AS "DescAvanco"
+  FROM "@AGRI_OSOF" Ordem
