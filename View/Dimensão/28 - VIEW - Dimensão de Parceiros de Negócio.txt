@@ -1,0 +1,12 @@
+CREATE VIEW "vw_dParceiros" AS
+SELECT dFornecedor."CardCode"                 AS "IdParceiro",
+	   INITCAP(TRIM(dFornecedor."CardName"))  AS "NomeParceiro",
+	   COALESCE(dFornecedor."CardType",'N')   AS "TipoParceiro" -- C = Cliente, L = Lead, S = Vendedor
+  FROM OCRD AS dFornecedor
+    
+UNION ALL 
+    
+SELECT 'NI' AS "IdParceiro",
+       'NI' AS "NomeParceiro",
+       'NI' AS "TipoParceiro"
+  FROM DUMMY ORDER BY "IdParceiro";

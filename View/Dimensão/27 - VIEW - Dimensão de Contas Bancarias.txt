@@ -1,7 +1,10 @@
 CREATE OR REPLACE VIEW "vw_dContaBancaria" AS 
-SELECT ContaBanc."BankCode" AS "CodBanco",
+SELECT ContaBanc."BankCode"  AS "CodBanco",
+       Banco."BankName"      AS "NomeBanco",
        ContaBanc."Account"   AS "CodConta",
-       ContaBanc."Branch"   AS "CodFilial",
-       ContaBanc."AcctName" AS "NomeConta",
+       ContaBanc."Branch"    AS "CodFilial",
+       ContaBanc."AcctName"  AS "NomeConta",
+       Banco."BankName" || ' - ' || ContaBanc."AcctName" AS "NomeBancoConta",
        ContaBanc."GLAccount" AS "CCBanco"
   FROM DSC1 ContaBanc
+  INNER JOIN ODSC Banco ON ContaBanc."BankCode" = Banco."BankCode"
