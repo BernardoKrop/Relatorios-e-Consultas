@@ -12,102 +12,65 @@
 
 /*==================================SOLICITAÇÃO==================================*/	
 
--- Iniciando a transação
 
-BEGIN TRANSACTION;
-SET SCHEMA SBOTRUSTAGRO;
+CREATE OR REPLACE VIEW "SBOTRUSTAGRO"."vw_fSolicitacao"  AS 
+SELECT Solicitacao."DocEntry"                    AS "CodEntrada" ,
+	   Solicitacao."ObjType"                     AS "CodObjeto" ,
+	   Solicitacao."DocNum"                      AS "CodInterno" ,
+	   COALESCE (SolicitacaoItemExtendida."MainUsage",
+	             '-1' )                          AS "CodUtilidade", --Flag interna para indicar CFO
+	   Solicitacao."DocStatus"                   AS "Status" ,
+	   Solicitacao."ReqName"                     AS "Solicitante" ,
+	   TO_TIMESTAMP(TO_VARCHAR(Solicitacao."DocDate",'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Solicitacao."DocTime"),
+	                4,
+	                '0') ,
+	                'YYYYMMDD HH24MI')           AS "DtHrLancamento" ,
+       TO_DATE(Solicitacao."DocDueDate")         AS "DtVencimento" ,
+	   TO_TIMESTAMP(TO_VARCHAR(Solicitacao."UpdateDate",'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Solicitacao."UpdateTS"),
+	                6,
+	                '0') ,
+	                'YYYYMMDD HH24MISS')         AS "DtHrAtualizacao" ,
+	   TO_DATE(Solicitacao."ReqDate")            AS "DtNecessaria" ,
+	   SolicitacaoItem."ItemCode"                AS "CodItem" ,
+	   SolicitacaoItem."Quantity"                AS "Quantidade" ,
+	   COALESCE(Solicitacao."OwnerCode",'-1')    AS "CodTitular" ,
+	   COALESCE(Solicitacao."BPLId",'-1')        AS "CodFilial" ,
+	   COALESCE(SolicitacaoItem."OcrCode",'ND')  AS "CodUnidade" ,
+	   COALESCE(SolicitacaoItem."OcrCode2",'ND') AS "CodDepartamento" ,
+  	   Solicitacao."Comments"                    AS "Comentarios" ,
+	   Solicitacao."U_TR_TipSol"                 AS "TipoSolicitacao" ,  --Reg Regularização Normal - Compra
+	   Solicitacao."UserSign"	                 AS "CodSolicitante" -- Conecta-se ao OHEM "userId"  
+	FROM (SELECT OPRQ.* -- visa excluir casos onde o Pedido foi cancelado, e não tera sequência a solicitação, mas a mesma foi somente encerrada (c = concluido)
+		    FROM OPRQ 
+		    LEFT JOIN POR1 ON OPRQ."DocEntry" = POR1."BaseEntry" AND OPRQ."ObjType" = POR1."BaseType" 
+		    LEFT JOIN OPOR ON POR1."DocEntry" = OPOR."DocEntry" 
+		  WHERE OPRQ."CANCELED" = 'N' 
+		     OR OPOR."CANCELED" = 'N' ) AS Solicitacao 
+	INNER JOIN PRQ1  AS SolicitacaoItem ON Solicitacao."DocEntry" = SolicitacaoItem."DocEntry" -- Traz dados sobre taxas parametrizadas.
+	INNER JOIN PRQ12 AS SolicitacaoItemExtendida ON Solicitacao."DocEntry" = SolicitacaoItemExtendida."DocEntry" -- Permite conectar com a OUSG que armazena os dados de CFOP
+	GROUP BY Solicitacao."DocNum" ,
+		 Solicitacao."DocDate" ,
+		 SolicitacaoItem."ItemCode" ,
+		 Solicitacao."ReqDate" ,
+		 Solicitacao."ReqName" ,
+		 Solicitacao."OwnerCode" ,
+		 Solicitacao."DocStatus" ,
+		 Solicitacao."BPLId" ,
+		 SolicitacaoItem."OcrCode" ,
+		 SolicitacaoItem."OcrCode2" ,
+		 Solicitacao."Comments" ,
+		 SolicitacaoItemExtendida."MainUsage" ,
+		 Solicitacao."UpdateDate" ,
+		 Solicitacao."DocEntry" ,
+		 Solicitacao."ObjType" ,
+		 Solicitacao."DocDueDate" ,
+		 Solicitacao."DocTime" ,
+		 Solicitacao."UpdateTS" ,
+		 Solicitacao."UserSign" ,
+		 SolicitacaoItem."Quantity"  ,
+		 Solicitacao."U_TR_TipSol"
+	ORDER BY Solicitacao."DocNum" ;
 
-ALTER VIEW "SBOTRUSTAGRO"."vw_SolicitacaoItem" (
-	 "Entrada_Cod",
-	 "Objeto_Tipo",
-	 "Interno_Cod",
-	 "Utilidade_Cod",
-	 "Status",
-	 "Solicitante",
-	 "Dt_Hrs_Lancamento",
-	 "Dt_Vencimento",
-	 "Dt_Hrs_Atualizacao",
-	 "Dt_Necessaria",
-	 "Item_Cod",
-	 "Quantidade" ,
-	 "Titular_Cod",
-	 "Filial_Cod",
-	 "Unidade",
-	 "Departamento",
-	 "Comentarios" ,
-	 "Solicitacao_Tipo" ,
-	 "Solicitante_Cod" 
-	 ) AS SELECT
-			 Solicitacao."DocEntry" AS "Entrada_Cod" ,
-			 Solicitacao."ObjType" AS "Objeto_Tipo" ,
-			 Solicitacao."DocNum" AS "Interno_Cod" ,
-			 COALESCE ( SolicitacaoItemExtendida."MainUsage",
-			 '-1' ) AS "Utilidade_Cod" --Flag interna para indicar CFOP
-		 ,
-			 Solicitacao."DocStatus" AS "Status" ,
-			 Solicitacao."ReqName" AS "Solicitante" ,
-			 TO_TIMESTAMP( TO_VARCHAR(Solicitacao."DocDate",
-			 'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Solicitacao."DocTime"),
-			 4,
-			 '0') ,
-			 'YYYYMMDD HH24MI') AS "Dt_Hrs_Lancamento" ,
-			 CAST ( Solicitacao."DocDueDate" AS DATE ) AS "Dt_Vencimento" ,
-			 TO_TIMESTAMP( TO_VARCHAR(Solicitacao."UpdateDate",
-			 'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Solicitacao."UpdateTS"),
-			 6,
-			 '0') ,
-			 'YYYYMMDD HH24MISS') AS "Dt_Hrs_Atualizacao" ,
-			 CAST ( Solicitacao."ReqDate" AS DATE ) AS "Dt_Necessaria" ,
-			 SolicitacaoItem."ItemCode" AS "Item_Cod" ,
-			 SolicitacaoItem."Quantity" AS  "Quantidade" ,
-			 COALESCE ( Solicitacao."OwnerCode",
-			 '-1' ) AS "Titular_Cod" ,
-			 COALESCE ( Solicitacao."BPLId" ,
-			 '-1' ) AS "Filial_Cod" ,
-			 COALESCE ( SolicitacaoItem."OcrCode" ,
-			 'ND' ) AS "Unidade" ,
-			 COALESCE ( SolicitacaoItem."OcrCode2" ,
-			 'ND' ) AS "Departamento" ,
-			 Solicitacao."Comments" AS "Comentarios" ,
-			 Solicitacao."U_TR_TipSol" AS "Solicitacao_Tipo" ,  --Reg Regularização Normal - Compra
-			 Solicitacao."UserSign"	AS "Solicitante_Cod" -- Conecta-se ao OHEM "userId"
-		FROM ( -- visa excluir casos onde o Pedido foi cancelado, e não tera sequência a solicitação, mas a mesma foi somente encerrada (c = concluido)
-		 SELECT
-			 OPRQ.* 
-			FROM OPRQ 
-			LEFT JOIN POR1 ON OPRQ."DocEntry" = POR1."BaseEntry" 
-			AND OPRQ."ObjType" = POR1."BaseType" 
-			LEFT JOIN OPOR ON POR1."DocEntry" = OPOR."DocEntry" 
-			WHERE OPRQ."CANCELED" = 'N' 
-			OR OPOR."CANCELED" = 'N' ) AS Solicitacao 
-		INNER JOIN PRQ1 AS SolicitacaoItem ON Solicitacao."DocEntry" = SolicitacaoItem."DocEntry" 
-		INNER JOIN PRQ12 AS SolicitacaoItemExtendida -- Traz dados sobre taxas parametrizadas.
-		 ON Solicitacao."DocEntry" = SolicitacaoItemExtendida."DocEntry" -- Permite conectar com a OUSG que armazena os dados de CFOP
-		
-		GROUP BY Solicitacao."DocNum" ,
-			 Solicitacao."DocDate" ,
-			 SolicitacaoItem."ItemCode" ,
-			 Solicitacao."ReqDate" ,
-			 Solicitacao."ReqName" ,
-			 Solicitacao."OwnerCode" ,
-			 Solicitacao."DocStatus" ,
-			 Solicitacao."BPLId" ,
-			 SolicitacaoItem."OcrCode" ,
-			 SolicitacaoItem."OcrCode2" ,
-			 Solicitacao."Comments" ,
-			 SolicitacaoItemExtendida."MainUsage" ,
-			 Solicitacao."UpdateDate" ,
-			 Solicitacao."DocEntry" ,
-			 Solicitacao."ObjType" ,
-			 Solicitacao."DocDueDate" ,
-			 Solicitacao."DocTime" ,
-			 Solicitacao."UpdateTS" ,
-			 Solicitacao."UserSign" ,
-			 SolicitacaoItem."Quantity"  ,
-			 Solicitacao."U_TR_TipSol"
-		ORDER BY Solicitacao."DocNum" ;
 
--- Concluir a transação
-	 COMMIT;
 -- Caso algo dê errado, desfazer todas as operações da transação, não pode ser feito após o COMMIT.
 -- ROLLBACK;
