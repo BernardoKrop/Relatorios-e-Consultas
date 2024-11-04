@@ -10,28 +10,17 @@
 -- SCHEMA: SBOTRUSTAGRO
 
 -- Iniciando a transação
-BEGIN TRANSACTION;
-SET SCHEMA SBOTRUSTAGRO;
-
-
-
 -- Criando uma visão para uso no Power BI
-CREATE VIEW "SBOTRUSTAGRO"."vw_Depreciacao" 
-( 	 
-	 "Cod_Ativo",
-	 "Valor_Depreciacao",
-	 "Periodo_Mes",
-	 "Dt_Inicio_Periodo" 
-) AS
+CREATE OR REPLACE VIEW "vw_fDepreciacao"  AS
 SELECT
-    Depreciacao."ItemCode" AS "Cod_Ativo",
-    Depreciacao."OrdDprPlan" AS "Valor_Depreciacao",
-    Depreciacao."SubPeriod" AS "Periodo_Mes",
-    Depreciacao."FromDate" AS "Dt_Inicio_Periodo"
-FROM
-    "SBOTRUSTAGRO".ODPV AS Depreciacao;
+    Depreciacao."ItemCode"          AS "CodAtivo",
+    Depreciacao."OrdDprPlan"        AS "ValorDepreciacao",
+    Depreciacao."SubPeriod"         AS "PeriodoMes",
+    TO_DATE(Depreciacao."FromDate") AS "DtInicioPeriodo"
+FROM ODPV AS Depreciacao
+WHERE Depreciacao."ItemCode" LIKE '%ATV%'; 
 
 -- Concluir a transação
-COMMIT;
+
 -- Caso algo dê errado, desfazer todas as operações da transação
 -- ROLLBACK;

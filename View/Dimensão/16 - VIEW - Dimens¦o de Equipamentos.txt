@@ -9,33 +9,19 @@
 -- DESCRIÇÃO: Esta consulta visa coletar e extrair dados para uso em Power BI.
 -- SCHEMA: SBOTRUSTAGRO
 
--- Iniciando a transação
-BEGIN TRANSACTION;
-SET SCHEMA SBOTRUSTAGRO;
-	CREATE VIEW "SBOTRUSTAGRO"."vw_dEquipamento"
-	(
-	Cod_Equipamento ,
-	Ano_Fabricacao ,
-	Modelo ,
-	Marca ,
-	Cod_Funcao ,
-	Dsc_Funcao ,
-	Cod_Fazenda ,
-	Frota
-	) AS
-		SELECT
-			EquipAgri."Code" 				AS Cod_Equipamento ,
-			EquipAgri."U_AnoFabri" 		AS Ano_Fabricacao ,
-			EquipAgri."U_DscModelo" 		AS Modelo ,
-			EquipAgri."U_DscMarca" 		AS Marca ,
-			EquipAgri."U_CodCatOper" 		AS Cod_Funcao ,
-			EquipAgri."U_DscCatOper" 		AS Dsc_Funcao ,
-			EquipAgri."U_CodigoFazenda" 	AS Cod_Fazenda ,
-			EquipAgri."U_CodCenCust4"		AS Frota
-			FROM
-				"@AGRI_EQPM" EquipAgri;
+
+CREATE OR REPLACE VIEW "vw_dEquipamento" AS
+SELECT EquipAgri."Code" 		   AS "CodEquipamento",
+	   EquipAgri."U_AnoFabri" 	   AS "AnoFabricacao",
+	   EquipAgri."U_DscModelo" 	   AS "Modelo",
+	   EquipAgri."U_DscMarca" 	   AS "Marca",
+	   EquipAgri."U_CodCatOper"    AS "CodFuncao",
+	   EquipAgri."U_DscCatOper"    AS "DscFuncao",
+	   EquipAgri."U_CodigoFazenda" AS "CodFazenda",
+	   EquipAgri."U_CodCenCust4"   AS "CodFrota"
+  FROM "@AGRI_EQPM" EquipAgri;
 					
 -- Concluir a transação
- COMMIT ;
+-- COMMIT ;
 -- Caso algo dê errado, desfazer todas as operações da transação
 -- ROLLBACK;

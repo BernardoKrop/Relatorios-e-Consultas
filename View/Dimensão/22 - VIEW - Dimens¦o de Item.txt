@@ -13,53 +13,35 @@
 
 /*==================================COLABORADORES==================================*/	
 
--- Iniciando a transação
 
-BEGIN TRANSACTION;
-SET SCHEMA SBOTRUSTAGRO;
 
-	ALTER VIEW "SBOTRUSTAGRO"."vw_Item"
-			(
-		    "Item_Cod"  
-		    , "Item_Nome"  
-		    , "Grupo_Cod"  
-		    , "UnidadeCompra"  
-		    , "Cancelado"  
-		    , "Dt_Hrs_Criado"  
-		    , "Dt_Hrs_Atualizacao"  
-			) AS		
-				SELECT
-				    Item."ItemCode"              AS "Item_Cod"  
-				    , Item."ItemName"            AS "Item_Nome"  
-				    , Item."ItmsGrpCod"          AS "Grupo_Cod"  
-				    , Item."BuyUnitMsr"         	AS "UnidadeCompra"  
-				    , Item."Canceled"            AS "Cancelado"    
-				    , TO_TIMESTAMP( TO_VARCHAR( Item."CreateDate" ,
-			 			'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Item."CreateTS"),
-			 			6,
-			 			'0') ,
-			 			'YYYYMMDD HH24MISS') AS "Dt_Hrs_Criado"  
-				    , TO_TIMESTAMP( TO_VARCHAR( Item."UpdateDate"  ,
-			 			'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Item."UpdateTS"),
-			 			6,
-			 			'0') ,
-			 			'YYYYMMDD HH24MISS') AS "Dt_Hrs_Atualizacao" 				    
-					FROM 
-						OITM				AS Item
-				UNION ALL
-				SELECT
-				    '-1'              		AS "Item_Cod"  
-				    , 'ND'           		AS "Item_Nome"  
-				    , '-1'      		    AS "Grupo_Cod"  
-				    , 'ND'		         	AS "UnidadeCompra"  
-				    , 'ND'		            AS "Cancelado"  
-				    , null			        AS "Dt_Hrs_Criado"  
-				    , null			        AS "Dt_Hrs_Atualizacao"  
-					FROM
-						DUMMY
-				ORDER BY
-					"Item_Cod" ASC ;
+ALTER VIEW "SBOTRUSTAGRO"."vw_dItem" AS		
+SELECT Item."ItemCode"                          AS "CodItem", 
+       Item."ItemName"                          AS "NomeItem",  
+       Item."ItmsGrpCod"                        AS "CodGrupo",  
+       Item."BuyUnitMsr"         	            AS "UnidadeCompra",  
+       Item."Canceled"                          AS "Cancelado",    
+       TO_TIMESTAMP(TO_VARCHAR( Item."CreateDate" ,'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Item."CreateTS"),
+		            6,'0'),'YYYYMMDD HH24MISS') AS "DtHrCriado",  
+       TO_TIMESTAMP(TO_VARCHAR( Item."UpdateDate",'YYYYMMDD') || ' ' || LPAD(TO_VARCHAR(Item."UpdateTS"),
+		            6,'0'),'YYYYMMDD HH24MISS') AS "DtHrAtualizacao" 				    
+	FROM OITM AS Item
+	
+UNION ALL
+
+SELECT
+    '-1'              		AS "CodItem"  
+    , 'ND'           		AS "NomeItem"  
+    , '-1'      		    AS "CodGrupo"  
+    , 'ND'		         	AS "UnidadeCompra"  
+    , 'ND'		            AS "Cancelado"  
+    , null			        AS "DtHrCriado"  
+    , null			        AS "DtHrAtualizacao"  
+	FROM
+		DUMMY
+ORDER BY
+	"CodItem" ASC ;
 									
 -- Concluir a transação
-	 COMMIT ;
+
 -- Caso algo dê errado, desfazer todas as operações da transação
