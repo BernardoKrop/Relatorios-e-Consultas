@@ -1,0 +1,8 @@
+CREATE OR REPLACE FUNCTION "HorasIniciais" (IN DtHoraInicio TIMESTAMP)
+returns retorno DECIMAL
+AS
+FimExpediente TIMESTAMP := TO_TIMESTAMP(TO_DATE(DtHoraInicio)||' '||'17:00:00');
+DiaHoraInicio TIMESTAMP := DtHoraInicio;
+BEGIN
+    SELECT SECONDS_BETWEEN(DiaHoraInicio,FimExpediente)/60/60 INTO retorno FROM DUMMY;
+END;

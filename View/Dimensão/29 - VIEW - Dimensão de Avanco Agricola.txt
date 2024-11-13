@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW "vw_dAgriAvaco" AS 
+CREATE OR REPLACE VIEW "vw_dAgriAvanco" AS 
 SELECT DISTINCT 
        CASE Ordem."U_Avanco"
        	 WHEN '' THEN 'NI'

@@ -1,16 +1,61 @@
 CREATE OR REPLACE VIEW "vw_fOSOficina"  AS 
 SELECT Ordem."DocEntry"         AS "NumOS",
-       Ordem."U_CodFazenda"     AS "CodFazenda",
+       CASE Ordem."U_CodFazenda"     
+         WHEN 'FAZ00015' THEN CASE Ordem."U_CodSetor"
+                                WHEN 'SET00011' THEN 'FAZ00014'
+                                WHEN 'SET00012' THEN 'FAZ00004'
+                                WHEN 'SET00013' THEN 'FAZ00003'
+                                WHEN 'SET00014' THEN 'FAZ00013'
+                                WHEN 'SET00015' THEN 'FAZ00009' 
+                                WHEN 'SET00016' THEN 'FAZ00012'
+                                WHEN 'SET00017' THEN 'FAZ00002'
+                                WHEN 'SET00018' THEN 'FAZ00005' 
+                                WHEN 'SET00019' THEN 'FAZ00011'
+                                WHEN 'SET00020' THEN 'FAZ00001'
+                                WHEN 'SET00021' THEN 'FAZ00010' 
+                                WHEN 'SET00022' THEN Ordem."U_CodFazenda"
+                              END
+         WHEN 'FAZ00007' THEN 'FAZ00014'
+         ELSE Ordem."U_CodFazenda"
+       END AS "CodFazenda",
        Ordem."U_CodMotivo"      AS "CodMotivo",  
        Ordem."U_CodClassMa"     AS "CodClasse",
        Ordem."U_Status"         AS "CodStatus", -- A = Alberto; E = Encerrado,
-	   Ordem."U_Avanco"         AS "CodAvanço",
+	   Ordem."U_Avanco"         AS "CodAvanco",
        Ordem."U_CodEquipam"     AS "CodEquipamento",
-       CASE WHEN Ordem."U_DtSaida" IS NOT NULL 
-         THEN SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE(Ordem."U_DtEntrada")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEntrada")),
-                              TO_TIMESTAMP(TO_DATE(Ordem."U_DtSaida")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEncerramento" ))) / 60 
-         ELSE SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE(Ordem."U_DtEntrada")||' '||"Agri_ConversaoIntHora"(Ordem."U_HoraEntrada")),
-                              CURRENT_TIMESTAMP)
-       END AS "TmpDecorrido"
-  FROM "@AGRI_OSOF" Ordem
-WHERE Ordem."Canceled"  = 'N';
+       FLOOR("TempoTrabalho") || ':' || LPAD(FLOOR(("TempoTrabalho" - FLOOR("TempoTrabalho")) * 60), 2, '0') AS "TmpDecorrido",
+       Ordem."TempoTrabalho"   AS "TmpNumero",
+       FLOOR("TempoCorrido") || ':' || LPAD(FLOOR(("TempoCorrido" - FLOOR("TempoCorrido")) * 60), 2, '0') AS "TmpCorrido",
+       Ordem."TempoCorrido"   AS "TmpCorridoNumero",
+       TO_DATE(Ordem."U_DtEntrada") AS "DtEntrada",
+       TO_DATE(Ordem."U_DtSaida")   AS "DtSaida"
+  FROM (SELECT CASE 
+			   WHEN "U_DtSaida" IS NOT NULL AND DAYS_BETWEEN("U_DtEntrada","U_DtSaida") > 0
+		         THEN ROUND("HorasIniciais"(TO_TIMESTAMP(TO_DATE("U_DtEntrada")||' '||"Agri_ConversaoIntHora"("U_HoraEntrada"))) +
+		                    (DAYS_BETWEEN("U_DtEntrada","U_DtSaida")-1)*10                                                       +
+		                    "HorasFinais"(TO_TIMESTAMP(TO_DATE("U_DtSaida")||' '||"Agri_ConversaoIntHora"("U_HoraEncerramento"))),2)
+		                  
+		         WHEN "U_DtSaida" IS NOT NULL AND DAYS_BETWEEN("U_DtEntrada","U_DtSaida") = 0
+		           THEN ROUND(SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE("U_DtEntrada")||' '||"Agri_ConversaoIntHora"("U_HoraEntrada")),
+		                                      TO_TIMESTAMP(TO_DATE("U_DtSaida")||' '||"Agri_ConversaoIntHora"("U_HoraEncerramento")))/60/60,2) 
+		             
+		         WHEN "U_DtSaida" IS NULL AND DAYS_BETWEEN("U_DtEntrada",CURRENT_TIMESTAMP) <> 0
+		           THEN ROUND("HorasIniciais"(TO_TIMESTAMP(TO_DATE("U_DtEntrada")||' '||"Agri_ConversaoIntHora"("U_HoraEntrada"))) +
+		                      (DAYS_BETWEEN("U_DtEntrada",CURRENT_TIMESTAMP)-1)*10                                                 +
+		                      "HorasFinais"(CURRENT_TIMESTAMP),2)
+		            
+		         WHEN "U_DtSaida" IS NULL AND DAYS_BETWEEN("U_DtEntrada",CURRENT_TIMESTAMP) = 0
+		           THEN ROUND(SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE("U_DtEntrada")||' '||"Agri_ConversaoIntHora"("U_HoraEntrada")),
+		                                      CURRENT_TIMESTAMP)/60/60,2)
+		       END AS "TempoTrabalho",
+		       CASE 
+			     WHEN "U_DtSaida" IS NOT NULL 
+         		   THEN ROUND(SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE("U_DtEntrada")||' '||"Agri_ConversaoIntHora"("U_HoraEntrada")),
+                                        TO_TIMESTAMP(TO_DATE("U_DtSaida")||' '||"Agri_ConversaoIntHora"("U_HoraEncerramento" )))/60/60,2) 
+                                        
+                   ELSE ROUND(SECONDS_BETWEEN(TO_TIMESTAMP(TO_DATE("U_DtEntrada")||' '||"Agri_ConversaoIntHora"("U_HoraEntrada")),
+                                        CURRENT_TIMESTAMP)/60/60,2)
+               END AS "TempoCorrido",
+		       * 
+		  FROM "@AGRI_OSOF") Ordem
+WHERE Ordem."Canceled"  = 'N'

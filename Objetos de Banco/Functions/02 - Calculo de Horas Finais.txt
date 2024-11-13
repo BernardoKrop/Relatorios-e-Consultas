@@ -1,0 +1,8 @@
+CREATE OR REPLACE FUNCTION "HorasFinais" (IN DtHoraFim TIMESTAMP)
+returns retorno DECIMAL
+AS
+InicioExpediente TIMESTAMP := TO_TIMESTAMP(TO_DATE(DtHoraFim)||' '||'07:00:00');
+DiaHoraFim       TIMESTAMP := DtHoraFim;
+BEGIN
+    SELECT SECONDS_BETWEEN(InicioExpediente,DiaHoraFim)/60/60 INTO retorno FROM DUMMY;
+END;

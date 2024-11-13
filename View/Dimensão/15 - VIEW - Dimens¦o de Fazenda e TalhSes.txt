@@ -12,7 +12,7 @@
 -- Iniciando a transação
 BEGIN TRANSACTION;
 SET SCHEMA SBOTRUSTAGRO;
-	CREATE VIEW "SBOTRUSTAGRO"."vw_Fazenda"
+	CREATE VIEW "SBOTRUSTAGRO"."vw_dFazenda"
 	(
 	Cod_Fazenda ,
 	Nome_Fazenda ,
