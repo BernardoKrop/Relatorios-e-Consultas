@@ -1,5 +1,5 @@
-SELECT 'NF - ' || CAST(DFEImportada."KeyNfe" AS TEXT)                AS "Chave Importação",
-       'NF - ' || CAST(Documentos."U_ChaveAcesso" AS TEXT)           AS "Chave Documento",
+SELECT 'NF - ' || DFEImportada."KeyNfe"                 AS "Chave Importação",
+       'NF - ' || Documentos."U_ChaveAcesso"           AS "Chave Documento",
        CASE 
          WHEN DFEImportada."StatusId" = 15 THEN 'Desconhecimento'
          WHEN DFEImportada."SefazId" = 101 THEN 'Cancelado(Sefaz)'
@@ -9,18 +9,19 @@ SELECT 'NF - ' || CAST(DFEImportada."KeyNfe" AS TEXT)                AS "Chave I
        EXTRACT(MONTH FROM DFEImportada."DateReceived")               AS "Mês",
        CASE 
          WHEN DFEImportada."CompanyId" = 1 THEN 'Matheu Garcia/Leonardo'
-         WHEN DFEImportada."CompanyId" IN (4,9,7,8,19,6,5,10) THEN 'Joaquim/Eduardo'
+         WHEN DFEImportada."CompanyId" IN (4,9,7,8,19,6,5,10) THEN 'Eduardo'
          WHEN DFEImportada."CompanyId" IN (20,22,16,19) THEN 'Wilkson/Time Suprimentos'
-         WHEN DFEImportada."CompanyId" = 18 THEN 'Waudumir' 
+         WHEN DFEImportada."CompanyId" = 18 THEN 'Kauã' 
          WHEN DFEImportada."CompanyId" = 21 THEN 'Geovana/Lucas'
        END                                                           AS "Responsável",
        Empresa."RazaoSocial"                						 AS "Empresa",
+       DFEImportada."Modelo",
        Modelo."NfmName"                                              AS "Modelo",
        OrigemImp."Description"                                       AS "Origem Importação",
        StatusDFE."Description"                                       AS "Situação Documento",
        SituacaoSefaz."Descricao"                                     AS "Retorno Sefaz",
        DFEImportada."Serial"                                         AS "Nota",
-       Documentos."TipoOrigem"                                       AS "Tipo Doc",
+       DocTipo."Description"                                         AS "Tipo Doc",
        CASE Documentos."DocStatus" 
          WHEN 'C' THEN 'Fechado'
          WHEN 'O' THEN 'Aberto'
@@ -43,12 +44,14 @@ SELECT 'NF - ' || CAST(DFEImportada."KeyNfe" AS TEXT)                AS "Chave I
        Usuario."U_NAME"                                              AS "Usuário Lançamento",
        CURRENT_DATE                                                  AS "Data Atual"
   FROM      "DocReceived" DFEImportada 
-  LEFT JOIN "DocReceivedStatus" StatusDFE              ON DFEImportada."StatusId" = StatusDFE."ID"
+  LEFT JOIN "DocReceivedStatus" StatusDFE              ON DFEImportada."StatusId"       = StatusDFE."ID"
   LEFT JOIN "ImportSource" OrigemImp                   ON DFEImportada."ImportSourceId" = OrigemImp."ID"
-  LEFT JOIN "Entidade" Empresa                         ON DFEImportada."CompanyId" = Empresa."ID"
-  LEFT JOIN "CodigoSituacaoDaNfeNaSefaz" SituacaoSefaz ON DFEImportada."SefazId" = SituacaoSefaz."cStat"
-  LEFT JOIN OCNT Municipio                             ON DFEImportada."IbgeCode" = Municipio."IbgeCode"
-  LEFT JOIN "vw_fDocsOrigem" Documentos                ON DFEImportada."KeyNfe" = Documentos."U_ChaveAcesso"
-  LEFT JOIN OUSR Usuario                               ON Documentos."UserSign"  = Usuario."USERID"
-  LEFT JOIN ONFM Modelo                                ON DFEImportada."Modelo"  = Modelo."NfmCode"
-  LEFT JOIN OUSG UsoPrincipal                          ON Documentos."MainUsage" = UsoPrincipal."ID"
+  LEFT JOIN "Entidade" Empresa                         ON DFEImportada."CompanyId"      = Empresa."ID"
+  LEFT JOIN "CodigoSituacaoDaNfeNaSefaz" SituacaoSefaz ON DFEImportada."SefazId"        = SituacaoSefaz."cStat"
+  LEFT JOIN OCNT Municipio                             ON DFEImportada."IbgeCode"       = Municipio."IbgeCode"
+  LEFT JOIN "vw_fDocsOrigem" Documentos                ON DFEImportada."KeyNfe"         = Documentos."U_ChaveAcesso"
+  LEFT JOIN "DocTypeConfiguracao" DocTipo              ON DFEImportada."DocTypeId"      = DocTipo."DocType"
+  LEFT JOIN OUSR Usuario                               ON Documentos."UserSign"         = Usuario."USERID"
+  LEFT JOIN ONFM Modelo                                ON DFEImportada."Modelo"         = Modelo."NfmCode"
+  LEFT JOIN OUSG UsoPrincipal                          ON Documentos."MainUsage"        = UsoPrincipal."ID"
+WHERE DFEImportada."SefazId" <> ''
