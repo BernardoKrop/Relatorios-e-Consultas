@@ -15,9 +15,9 @@ Ex:
 
 ## Foreign keys
 
-Todas as foreign keys devem seguir o padrão `IdNomeDaTabelaNoSingular`.
+Todas as foreign keys devem seguir o padrão `CodNomeDaTabelaNoSingular`.
 
-Por exemplo, caso a tabela `Produtos` tenha um relacionameto com a tabela `Grupos`, o nome da coluna foreign key da tabela `Produtos` deve ser `IdGrupo`.
+Por exemplo, caso a tabela `Produtos` tenha um relacionameto com a tabela `Grupos`, o nome da coluna foreign key da tabela `Produtos` deve ser `CodGrupo`.
 
 ## Nomenclatura de views
 
