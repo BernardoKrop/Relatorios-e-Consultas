@@ -13,73 +13,45 @@
 
 /*++++++++++++++++++++++++++++++++CRIAÇÃO DE VIEW++++++++++++++++++++++++++++++++*/
 
-BEGIN TRANSACTION ;
-SET SCHEMA SBOTRUSTAGRO ;
-
-ALTER VIEW "SBOTRUSTAGRO"."vw_fNFEntrada"
-	(
-		"Entrada_Cod"
-		, "Objeto_Tipo"
-		, "Interno_Cod"
-		, "Status"
-		, "Utilidade_Cod"
-		, "BaseEntrada_Cod"
-		, "BaseObjeto_Tipo"
-		, "BaseEntradaAD_Cod"
-		, "BaseADObjeto_Tipo"
-		, "Titular_Cod"	
-		, "Dt_Emissao"   
-		, "Dt_Vencimento"
-		, "Dt_Hrs_Lancamento"	
-		, "Dt_Hrs_Atualizacao"	      
-		, "Fornecedor_Cod"
-		, "Item_Cod"
-		, "Volume_Total"
-		, "Preco"
-		, "Valor_DescontoRateio"
-		, "Filial"
-		, "Unidade"
-		, "Departamento"
-		, "Comentarios"
-	) AS
+CREATE OR REPLACE VIEW "vw_fNFEntrada" AS
 /*++++++++++++++++++++++++++++++++CORPO DA CONSULTA++++++++++++++++++++++++++++++++*/
 SELECT 
-		NFEntrada."DocEntry"													AS "Entrada_Cod"
-		, NFEntradaItem."ObjType"												AS "Objeto_Tipo"
-		, NFEntrada."DocNum"													AS "Interno_Cod"
-		, NFEntrada."DocStatus"												AS "Status"
-		, COALESCE ( NFEntradaExtendido."MainUsage", '-1' )					AS "Utilidade_Cod" --Flag interna para indicar CFOP 
-		, COALESCE ( NFEntradaItem."BaseEntry" , '-1' )							AS "BaseEntrada_Cod"
-		, NFEntradaItem."BaseType"												AS "BaseObjeto_Tipo"
-		, NFEntradaAdiantamento."BaseAbs"									AS "BaseEntradaAD_Cod"
-		, NFEntradaAdiantamento."BaseType"									AS "BaseADObjeto_Tipo"
-		, COALESCE ( NFEntrada."OwnerCode", '-1' )							AS "Titular_Cod"	
-		, CAST 	( NFEntrada."TaxDate" AS DATE )								AS "Dt_Emissao"   
-		, CAST 	( NFEntrada."DocDueDate" AS DATE )							AS "Dt_Vencimento"
-		, TO_DATE(NFEntradaItem."ShipDate")                                 AS "Data Envio"
+		NFEntrada."DocEntry"													AS "CodEntrada"
+		, NFEntradaItem."ObjType"												AS "TipoObjeto"
+		, NFEntrada."DocNum"													AS "CodInterno"
+		, NFEntrada."DocStatus"												    AS "Status"
+		, COALESCE ( NFEntradaExtendido."MainUsage", '-1' )				    	AS "CodUtilidade" --Flag interna para indicar CFOP 
+		, COALESCE ( NFEntradaItem."BaseEntry" , '-1' )							AS "CodBaseEntrada"
+		, NFEntradaItem."BaseType"												AS "TipoBaseObjeto"
+		, NFEntradaAdiantamento."BaseAbs"								  	    AS "CodBaseEntradaAD"
+		, NFEntradaAdiantamento."BaseType"									    AS "TipoBaseADObjeto"
+		, COALESCE ( NFEntrada."OwnerCode", '-1' )						 	    AS "CodTitular"	
+		, CAST 	( NFEntrada."TaxDate" AS DATE )								    AS "DtEmissao"   
+		, CAST 	( NFEntrada."DocDueDate" AS DATE )							    AS "DtVencimento"
+		, TO_DATE(NFEntradaItem."ShipDate")                                     AS "DataEnvio"
 		, TO_TIMESTAMP(
 	  		TO_VARCHAR(NFEntrada."DocDate", 'YYYYMMDD') || ' ' ||
 	    	LPAD(TO_VARCHAR(NFEntrada."DocTime"), 4, '0') ,
-	      'YYYYMMDD HH24MI') 													AS "Dt_Hrs_Lancamento"	
+	      'YYYYMMDD HH24MI') 													AS "DtHrLancamento"	
 	   	, TO_TIMESTAMP(
 			TO_VARCHAR(NFEntrada."UpdateDate", 'YYYYMMDD') || ' ' ||
 	   		LPAD(TO_VARCHAR(NFEntrada."UpdateTS"), 6, '0') ,
-	   	  'YYYYMMDD HH24MISS') 													AS "Dt_Hrs_Atualizacao"	      
-		, NFEntrada."CardCode"												AS "Fornecedor_Cod"
-		, NFEntradaItem."ItemCode"												AS "Item_Cod"
-		, NFEntradaItem."Quantity"												AS "Volume_Total"
+	   	  'YYYYMMDD HH24MISS') 													AS "DtHrAtualizacao"	      
+		, NFEntrada."CardCode"												    AS "CodFornecedor"
+		, NFEntradaItem."ItemCode"												AS "CodItem"
+		, NFEntradaItem."Quantity"												AS "VolumeTotal"
 		, NFEntradaItem."Price"													AS "Preco"
 	 	, ( ( NFEntradaItem."LineTotal" / CASE
 	 									 	WHEN ( SUM( NFEntradaItem."LineTotal" ) OVER (PARTITION BY NFEntrada."DocNum" ) ) = 0 
 	 									 	THEN null
 	 									 	ELSE ( SUM( NFEntradaItem."LineTotal" ) OVER (PARTITION BY NFEntrada."DocNum" ) ) 
 	 									 END ) *
-						COALESCE ( NFEntrada."DiscSum" , 0 ) ) 				AS "Valor_DescontoRateio"
-		, NFEntrada."BPLId"													AS "Filial"
-		, NFEntradaItem."OcrCode"										    AS "Unidade"
-		, NFEntradaItem."OcrCode2"					 						AS "Departamento"
-		, NFEntradaItem."OcrCode3"                                          AS "Natureza"
-		, NFEntradaItem."OcrCode4"                                          AS "Frete"
+						COALESCE ( NFEntrada."DiscSum" , 0 ) ) 				AS "ValorDescontoRateio"
+		, NFEntrada."BPLId"													AS "CodFilial"
+		, NFEntradaItem."OcrCode"										    AS "CodUnidade"
+		, NFEntradaItem."OcrCode2"					 						AS "CodDepartamento"
+		, NFEntradaItem."OcrCode3"                                          AS "CodNatureza"
+		, NFEntradaItem."OcrCode4"                                          AS "CodFrete"
 		, NFEntrada."Comments"												AS "Comentarios"
 
 		FROM OPCH										AS NFEntrada
@@ -91,8 +63,9 @@ SELECT
 			ON NFEntrada."DocEntry" 	=	NFEntradaExtendido."DocEntry"
 		-- Permite conectar com a OUSG que armazena os dados de CFOP
 		WHERE
-			NFEntrada."CANCELED" 	<> 'C'
-			AND NFEntradaAdiantamento."BaseAbs" IS NOT NULL
+			NFEntrada."CANCELED" 	= 'N'
+			--AND NFEntradaAdiantamento."BaseAbs" IS NOT NULL
+			AND NFEntrada."Model" <> 38 --Modelo "Nada"
 		GROUP BY
 			NFEntrada."DocEntry"
 			, NFEntradaItem."BaseEntry"
@@ -126,5 +99,3 @@ SELECT
 		
 		ORDER BY
 			NFEntrada."DocNum" DESC
-			
-			
