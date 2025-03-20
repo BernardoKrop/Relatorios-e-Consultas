@@ -1,5 +1,6 @@
 CREATE OR REPLACE VIEW "vw_fOSOficina"  AS 
 SELECT Ordem."DocEntry"         AS "NumOS",
+	/* Desenvolvido, devido durante 2024, o processo do Agricola mudou temporariamente, gerando uma mudança no uso de campos, ainda que por uma duração curta, impactou a capacidade de análise dos relatorios ao trocar as fazendas utilizadas devendo ser manualmente via consulta alterar. */
        CASE Ordem."U_CodFazenda"     
          WHEN 'FAZ00015' THEN CASE Ordem."U_CodSetor"
                                 WHEN 'SET00011' THEN 'FAZ00014'
