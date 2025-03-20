@@ -1,0 +1,4 @@
+CREATE OR REPLACE VIEW "vw_dLicencasLBR" AS
+SELECT "U_Usuario" AS "CodUsuario",
+       "U_Licenca" AS "PossuiLicenca"
+FROM "@LBRO_PRML";

@@ -1,0 +1,3 @@
+      FROM M_DISK_USAGE
+    WHERE USED_SIZE > 0
+      AND USAGE_TYPE = 'TRACE';
