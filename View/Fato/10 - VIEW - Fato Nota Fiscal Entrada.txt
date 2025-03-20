@@ -1,20 +1,6 @@
-/*==================================================================================*/
-/*		      			Fato de Nota Fiscal de Entrada								*/
-/*==================================================================================*/
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- CRIADO POR: 				24/04/2024		JOHNSON WESLEY HRENECHEN	
- ( I ) ATUALIZADO POR: 		18/06/2024      BERNARDO S. KROPIWIEC
-    LOG: NOVAS COLUNAS DE CENTRO DE CUSTO E SHIPDATE ADICIONADAS, BEM COMO ALIAS DE TABELA PARA SE ENQUADRAREM NO NOVO PADRÃO
+-- SBOTRUSTAGRO."vw_fNFEntrada" source
 
- OBJETIVO: 	Uso para Power Bi
- DESCRIÇÃO: Permite visualizar e conectar a tabela fato sobre as autorizações, com as devidas etapas dos documentos de marketing.
- SCHEMA: SBOTRUSTAGRO
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
-/*++++++++++++++++++++++++++++++++CRIAÇÃO DE VIEW++++++++++++++++++++++++++++++++*/
-
-CREATE OR REPLACE VIEW "vw_fNFEntrada" AS
-/*++++++++++++++++++++++++++++++++CORPO DA CONSULTA++++++++++++++++++++++++++++++++*/
+CREATE OR REPLACE VIEW SBOTRUSTAGRO."vw_fNFEntrada" AS
 SELECT 
 		NFEntrada."DocEntry"													AS "CodEntrada"
 		, NFEntradaItem."ObjType"												AS "TipoObjeto"
@@ -51,16 +37,15 @@ SELECT
 		, NFEntradaItem."OcrCode"										    AS "CodUnidade"
 		, NFEntradaItem."OcrCode2"					 						AS "CodDepartamento"
 		, NFEntradaItem."OcrCode3"                                          AS "CodNatureza"
-		, NFEntradaItem."OcrCode4"                                          AS "CodFrete"
+		, NFEntradaItem."OcrCode4"                                          AS "CodFrota"
 		, NFEntrada."Comments"												AS "Comentarios"
+		, Usuario.USER_CODE                                                 AS "CodUsuario"
 
-		FROM OPCH										AS NFEntrada
-		INNER JOIN 	PCH1								AS NFEntradaItem
-			ON NFEntrada."DocEntry"	=	NFEntradaItem."DocEntry"
-		LEFT JOIN	PCH11								AS NFEntradaAdiantamento
-			ON NFEntrada."DocEntry"	=	NFEntradaAdiantamento."DocEntry"
-		LEFT JOIN 	PCH12								AS NFEntradaExtendido -- Traz dados sobre 
-			ON NFEntrada."DocEntry" 	=	NFEntradaExtendido."DocEntry"
+		FROM OPCH		 AS NFEntrada
+		INNER JOIN PCH1	 AS NFEntradaItem         ON NFEntrada."DocEntry" = NFEntradaItem."DocEntry"
+		LEFT JOIN  PCH11 AS NFEntradaAdiantamento ON NFEntrada."DocEntry" = NFEntradaAdiantamento."DocEntry"
+		LEFT JOIN  PCH12 AS NFEntradaExtendido    ON NFEntrada."DocEntry" = NFEntradaExtendido."DocEntry"
+		LEFT JOIN  OUSR  AS Usuario               ON NFEntrada."UserSign" = Usuario.USERID 
 		-- Permite conectar com a OUSG que armazena os dados de CFOP
 		WHERE
 			NFEntrada."CANCELED" 	= 'N'
@@ -95,7 +80,7 @@ SELECT
 			, NFEntradaAdiantamento."BaseType"
 			, NFEntradaItem."ShipDate"
 			, NFEntradaItem."OcrCode3" 
-			, NFEntradaItem."OcrCode4" 
-		
-		ORDER BY
-			NFEntrada."DocNum" DESC
+			, NFEntradaItem."OcrCode4"
+			, Usuario.USER_CODE
+	ORDER BY
+			NFEntrada."DocNum" DESC;

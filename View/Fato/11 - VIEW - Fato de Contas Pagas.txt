@@ -2,6 +2,7 @@ CREATE OR REPLACE VIEW "vw_fContaPaga" AS
 SELECT
 /*========================== DESCRITIVO DAS CONTAS ==========================*/
     ContaPaga."BPLId" AS "idFilial" ,
+    ContaPagaNota."InvType",
 	CASE
 		WHEN ContaPagaNota."InvType" = '18' 	THEN NFEntrada."CardCode"
 		WHEN ContaPagaNota."InvType" = '204'	THEN Adiantamento."CardCode" 
@@ -39,16 +40,18 @@ SELECT
      
      
      CASE
-          	WHEN ContaPagaNota."InvType" = '18'  	THEN (NFItem."OcrSoma"  /  NFEntrada."DocTotal") --Rateio usando os valores de dos itens agrupados por centro de custo como peso
+          	WHEN ContaPagaNota."InvType" = '18'  	THEN (NFItem."OcrSoma"  / SUM(NFItem."OcrSoma") OVER (PARTITION BY NFEntrada."DocEntry",ContaPaga."DocEntry"))  --Rateio usando os valores de dos itens agrupados por centro de custo como peso
 		                                                * (ContaPagaNota."SumApplied")
 
-          	WHEN ContaPagaNota."InvType" = '204' 	THEN (AdiantItem."OcrSoma"  / Adiantamento."DocTotal")
+          	WHEN ContaPagaNota."InvType" = '204' 	THEN (AdiantItem."OcrSoma"  / SUM(AdiantItem."OcrSoma") OVER (PARTITION BY Adiantamento."DocEntry",ContaPaga."DocEntry")) 
 		                                                * (AdiantPrest."InsTotal")
 		                                                
            	WHEN ContaPagaNota."InvType" = '30'  	THEN (LRItem."Debit" /  SUM(LRItem."Debit") 
 		                                                                     OVER (PARTITION BY LRItem."TransId",ContaPaga."DocNum")) 
 		                                                * (ContaPaga."DocTotal")  
-		                                                
+		    
+            WHEN ContaPagaJuros."DocNum" IS NOT NULL THEN ContaPagaJuros."SumApplied"
+            
 		    ELSE                                         ContaPaga."DocTotal"
      END AS "RateioPrevisto" ,	 
     
@@ -58,17 +61,19 @@ SELECT
     (NFItem."OcrSoma"  / NFEntrada."DocTotal" ) * 
     (ContaPagaNota."SumApplied" / ContaPagaNota."TotVlrs") *COALESCE(LancDoctoVlrs."Creditos",0) AS "Descontos",
     
+    
+    
     COALESCE(ContaPagaNota."SumApplied", ContaPaga."DocTotal") + 
       COALESCE((ContaPagaNota."SumApplied" / ContaPagaNota."TotVlrs") * LancDoctoVlrs."Debitos",0) -
       COALESCE((ContaPagaNota."SumApplied" / ContaPagaNota."TotVlrs") * LancDoctoVlrs."Creditos",0) AS "Realizado"  , --Realizado é o valor total pago mais o juros rateado
-    
+      
 	CASE
-          	WHEN ContaPagaNota."InvType" = '18'  	THEN (NFItem."OcrSoma"  / NFEntrada."DocTotal" ) 
+          	WHEN ContaPagaNota."InvType" = '18'  	THEN (NFItem."OcrSoma"  / SUM(NFItem."OcrSoma") OVER (PARTITION BY NFEntrada."DocEntry",ContaPaga."DocEntry")) 
 		                                                * ((ContaPagaNota."SumApplied") + 
       														  COALESCE((ContaPagaNota."SumApplied" / ContaPagaNota."TotVlrs") * LancDoctoVlrs."Debitos",0) -
       														  COALESCE((ContaPagaNota."SumApplied" / ContaPagaNota."TotVlrs") * LancDoctoVlrs."Creditos",0) ) 
 
-          	WHEN ContaPagaNota."InvType" = '204' 	THEN (AdiantItem."OcrSoma"  / Adiantamento."DocTotal") 
+          	WHEN ContaPagaNota."InvType" = '204' 	THEN (AdiantItem."OcrSoma"  / SUM(AdiantItem."OcrSoma") OVER (PARTITION BY Adiantamento."DocEntry",ContaPaga."DocEntry")) 
 		                                                * ((ContaPagaNota."SumApplied") + 
       														  COALESCE((ContaPagaNota."SumApplied" / ContaPagaNota."TotVlrs") * LancDoctoVlrs."Debitos",0) -
       														  COALESCE((ContaPagaNota."SumApplied" / ContaPagaNota."TotVlrs") * LancDoctoVlrs."Creditos",0) )
@@ -76,8 +81,10 @@ SELECT
            	WHEN ContaPagaNota."InvType" = '30'  	THEN (LRItem."Debit" /  SUM(LRItem."Debit") 
 		                                                                     OVER (PARTITION BY LRItem."TransId",ContaPaga."DocNum")) 
 		                                                * (ContaPaga."DocTotal")
-		                                                
-		    ELSE                                         ContaPaga."DocTotal"
+		    
+		    WHEN ContaPagaJuros."DocNum" IS NOT NULL THEN ContaPagaJuros."SumApplied"
+		    
+		    ELSE                                          ContaPaga."DocTotal"
      END AS "RateioRealizado" ,	
 
 	CASE
@@ -124,6 +131,8 @@ SELECT
 		WHEN ContaPaga."CheckSum" 	> 0 		THEN ( SELECT dPlanoDeContas."AcctName" FROM OACT AS dPlanoDeContas WHERE dPlanoDeContas."AcctCode" = ContaPaga."CheckAcct" )
 		WHEN ContaPaga."BoeSum" 	> 0 		THEN Boleto."BPBankNam" || ' - AG ' || Boleto."BPBankBrnc" || ' - C/C ' || Boleto."BPBankAct" 
 	END AS "Banco" , --Banco da movimentação
+	ContaPagaJuros."AcctCode" AS "Conta2",
+	( SELECT dPlanoDeContas."AcctName" FROM OACT AS dPlanoDeContas WHERE dPlanoDeContas."AcctCode" = ContaPagaJuros."AcctCode") AS "Banco2",
 	CASE
 		WHEN ContaPaga."TrsfrSum" 	> 0 		THEN 'Transferência'
 		WHEN ContaPaga."CashSum" 	> 0 		THEN 'Espécie'
@@ -140,13 +149,13 @@ SELECT
 	   WHEN ContaPagaNota."InvType" 	= '18'  	THEN NFItem."OcrCode2"
 	   WHEN ContaPagaNota."InvType" 	= '204' 	THEN AdiantItem."OcrCode2"         
 	   WHEN ContaPagaNota."InvType" 	= '30'  	THEN LRItem."OcrCode2"
-	   ELSE                                              ContaPagaJuros."OcrCode"
+	   ELSE                                              ContaPagaJuros."OcrCode2"
 	END AS "idDepartamento",
 	CASE
 	   WHEN ContaPagaNota."InvType" 	= '18'  	THEN NFItem."OcrCode3"
 	   WHEN ContaPagaNota."InvType" 	= '204' 	THEN AdiantItem."OcrCode3"         
 	   WHEN ContaPagaNota."InvType" 	= '30'  	THEN LRItem."OcrCode3"
-	   ELSE                                              ContaPagaJuros."OcrCode"
+	   ELSE                                              ContaPagaJuros."OcrCode3"
 	END AS "idNatureza"
 	
 	
@@ -193,6 +202,7 @@ SELECT
                        "OcrCode2",
                        "OcrCode3")
                     AS AdiantItem     ON Adiantamento."DocEntry"    = AdiantItem."DocEntry"
+                    
 	LEFT JOIN DPO6  AS AdiantPrest    ON ContaPagaNota."baseAbs"    = AdiantPrest."DocEntry" AND AdiantPrest."InstlmntID"  = ContaPagaNota."InstId"
 	LEFT JOIN OJDT  AS LivroRazao     ON ContaPagaNota."DocEntry"   = LivroRazao."TransId"   AND NFEntrada."TransId" IS NULL AND Adiantamento."TransId" IS NULL	
 	LEFT JOIN JDT1  AS LRItem         ON LRItem."TransId"           = LivroRazao."TransId" 	 AND LRItem."DebCred" = 'D'  AND LRItem."Debit" <> 0  
@@ -215,6 +225,8 @@ WHERE ContaPaga."Canceled" = 'N'
 	--AND  NFEntrada."DocNum" = 8447
 	--AND LivroRazao."TransId" = 4074
 	--AND LivroRazao."TransId" = 39900
+    --AND ContaPaga."DocNum" = 1800020169
+    --AND TO_DATE(ContaPaga."TrsfrDate")  = '20240830'
+    --AND ContaPaga."TrsfrAcct" = '1.01.01.02.003'
+    --AND NFENTRADA."DocNum" = 2136
 ORDER BY "Doc Baixa" DESC
-
-
