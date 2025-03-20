@@ -1,17 +1,7 @@
-CREATE OR REPLACE VIEW "vw_fDocsOrigem"("TransId",
-					      "ObjType",
-					      "DocEntry",
-					      "DocNum",
-					      "CardCode",
-					      "CardName",
-					      "DocStatus",
-					      "TipoOrigem",
-					      "Comments",
-					      "CANCELED",
-					      "U_ChaveAcesso",
-					      "UserSign") as
-------------------------Saídas--------------------------------
-SELECT NFSaida."TransId",
+-- SBOTRUSTAGRO."vw_fDocsOrigem" source
+
+CREATE OR REPLACE VIEW SBOTRUSTAGRO."vw_fDocsOrigem" AS
+((((((((((SELECT NFSaida."TransId",
        NFSaida."ObjType",
        NFSaida."DocEntry",
        NFSaida."DocNum",
@@ -22,12 +12,12 @@ SELECT NFSaida."TransId",
        NFSaida."Comments",
        NFSaida."CANCELED",
        NFSaida."U_ChaveAcesso",   --Nota de Saída
-       NFSaida."UserSign"
+       NFSaida."UserSign",
+       NFSaidaImp."MainUsage" 
   FROM OINV NFSaida
-  
-	UNION ALL
-
-SELECT ADCliente."TransId",
+  LEFT JOIN INV12 NFSaidaImp 
+    ON NFSaida."DocEntry" = NFSaidaImp."DocEntry") UNION ALL 
+    (SELECT ADCliente."TransId",
        ADCliente."ObjType",
        ADCliente."DocEntry",
        ADCliente."DocNum",
@@ -38,12 +28,12 @@ SELECT ADCliente."TransId",
        ADCliente."Comments",
        ADCliente."CANCELED",
        ADCliente."U_ChaveAcesso", --Adiantamento de cleinte
-       ADCliente."UserSign"
-  FROM ODPI ADCliente 
-  
-	UNION ALL
-
-SELECT DevNFSaida."TransId",
+       ADCliente."UserSign",
+       ADClienteImp."MainUsage"
+  FROM      ODPI ADCliente 
+  LEFT JOIN DPI12 ADClienteImp 
+    ON ADCliente."DocEntry" = ADClienteImp."DocEntry")) UNION ALL 
+    (SELECT DevNFSaida."TransId",
        DevNFSaida."ObjType",
        DevNFSaida."DocEntry",
        DevNFSaida."DocNum",
@@ -54,12 +44,12 @@ SELECT DevNFSaida."TransId",
        DevNFSaida."Comments",
        DevNFSaida."CANCELED",
        DevNFSaida."U_ChaveAcesso",
-       DevNFSaida."UserSign"
-  FROM ORIN DevNFSaida
-
-	UNION ALL
-
-SELECT EntregaMerc."TransId",
+       DevNFSaida."UserSign",
+       DevNFSaidaImp."MainUsage"
+  FROM      ORIN DevNFSaida
+  LEFT JOIN RIN12 DevNFSaidaImp 
+    ON DevNFSaida."DocEntry" = DevNFSaidaImp."DocEntry")) UNION ALL 
+    (SELECT EntregaMerc."TransId",
        EntregaMerc."ObjType",
        EntregaMerc."DocEntry",
        EntregaMerc."DocNum",
@@ -70,12 +60,12 @@ SELECT EntregaMerc."TransId",
        EntregaMerc."Comments",
        EntregaMerc."CANCELED",
        EntregaMerc."U_ChaveAcesso",           --Entrega de mercadoria
-       EntregaMerc."UserSign"
-  FROM ODLN EntregaMerc
-    
-	UNION ALL 
-
-SELECT SaidaMerc."TransId",
+       EntregaMerc."UserSign",
+       EntregaMercImp."MainUsage"
+  FROM      ODLN EntregaMerc
+  LEFT JOIN DLN12 EntregaMercImp 
+    ON EntregaMerc."DocEntry" = EntregaMercImp."DocEntry")) UNION ALL 
+    (SELECT SaidaMerc."TransId",
        SaidaMerc."ObjType",
        SaidaMerc."DocEntry",
        SaidaMerc."DocNum",
@@ -86,12 +76,12 @@ SELECT SaidaMerc."TransId",
        SaidaMerc."Comments",
        SaidaMerc."CANCELED",
        SaidaMerc."U_ChaveAcesso",
-       SaidaMerc."UserSign"
-  FROM OIGE SaidaMerc
-  
-	UNION ALL
-------------------------Entradas-----------------------------------
-SELECT NFEntrada."TransId",
+       SaidaMerc."UserSign",
+       SaidaMercImp."MainUsage"
+  FROM      OIGE SaidaMerc
+  LEFT JOIN IGE12 SaidaMercImp 
+    ON SaidaMerc."DocEntry" = SaidaMercImp."DocEntry")) UNION ALL 
+    (SELECT NFEntrada."TransId",
        NFEntrada."ObjType",
        NFEntrada."DocEntry",
        NFEntrada."DocNum",
@@ -102,12 +92,12 @@ SELECT NFEntrada."TransId",
        NFEntrada."Comments",
        NFEntrada."CANCELED",
        NFEntrada."U_ChaveAcesso",
-       NFEntrada."UserSign"
-  FROM OPCH NFEntrada
-    
-	UNION ALL
-
-SELECT ADFornecedor."TransId",
+       NFEntrada."UserSign",
+       NFEntradaImp."MainUsage"
+  FROM      OPCH  NFEntrada
+  LEFT JOIN PCH12 NFEntradaImp 
+    ON NFEntrada."DocEntry" = NFEntradaImp."DocEntry")) UNION ALL 
+    (SELECT ADFornecedor."TransId",
        ADFornecedor."ObjType",
        ADFornecedor."DocEntry",
        ADFornecedor."DocNum",
@@ -118,13 +108,12 @@ SELECT ADFornecedor."TransId",
        ADFornecedor."Comments",
        ADFornecedor."CANCELED",
        ADFornecedor."U_ChaveAcesso",             --Adiantamento de Fornecedor
-       ADFornecedor."UserSign"
-  FROM ODPO ADFornecedor
-
-    
-	UNION ALL 
-
-SELECT DevNFEntrada."TransId",
+       ADFornecedor."UserSign",
+       ADFornecedorImp."MainUsage"
+  FROM      ODPO ADFornecedor
+  LEFT JOIN DPO12 ADFornecedorImp 
+    ON ADFornecedor."DocEntry" = ADFornecedorImp."DocEntry")) UNION ALL 
+    (SELECT DevNFEntrada."TransId",
        DevNFEntrada."ObjType",
        DevNFEntrada."DocEntry",
        DevNFEntrada."DocNum",
@@ -135,12 +124,12 @@ SELECT DevNFEntrada."TransId",
        DevNFEntrada."Comments",
        DevNFEntrada."CANCELED",
        DevNFEntrada."U_ChaveAcesso",
-       DevNFEntrada."UserSign"
-  FROM ORPC DevNFEntrada
- 
-	UNION ALL
-
-SELECT EntradaMerc."TransId",
+       DevNFEntrada."UserSign",
+       DevNFEntradaImp."MainUsage"
+  FROM      ORPC DevNFEntrada
+  LEFT JOIN RPC12 DevNFEntradaImp 
+    ON DevNFEntrada."DocEntry" = DevNFEntradaImp."DocEntry")) UNION ALL 
+    (SELECT EntradaMerc."TransId",
        EntradaMerc."ObjType",
        EntradaMerc."DocEntry",
        EntradaMerc."DocNum",
@@ -151,7 +140,40 @@ SELECT EntradaMerc."TransId",
        EntradaMerc."Comments",
        EntradaMerc."CANCELED",
        EntradaMerc."U_ChaveAcesso",
-       EntradaMerc."UserSign"
-  FROM OIGN EntradaMerc
-
-
+       EntradaMerc."UserSign",
+       EntradaMercImp."MainUsage"
+  FROM      OIGN EntradaMerc
+  LEFT JOIN IGN12 EntradaMercImp 
+    ON EntradaMerc."DocEntry" = EntradaMercImp."DocEntry")) UNION ALL 
+    (SELECT RecebMerc."TransId",
+       RecebMerc."ObjType",
+       RecebMerc."DocEntry",
+       RecebMerc."DocNum",
+       RecebMerc."CardCode",
+       RecebMerc."CardName",
+       RecebMerc."DocStatus",
+       'Recebimento Merc' AS "TipoOrigem",
+       RecebMerc."Comments",
+       RecebMerc."CANCELED",
+       RecebMerc."U_ChaveAcesso",
+       RecebMerc."UserSign",
+       RecebMercImp."MainUsage"
+  FROM      OPDN RecebMerc
+  LEFT JOIN PDN12 RecebMercImp 
+    ON RecebMerc."DocEntry" = RecebMercImp."DocEntry") UNION ALL 
+    (SELECT Devolucao."TransId",
+       Devolucao."ObjType",
+       Devolucao."DocEntry",
+       Devolucao."DocNum",
+       Devolucao."CardCode",
+       Devolucao."CardName",
+       Devolucao."DocStatus",
+       'Devolucao' AS "TipoOrigem",
+       Devolucao."Comments",
+       Devolucao."CANCELED",
+       Nota."KeyNfe" AS "U_ChaveAcesso",
+       Devolucao."UserSign",
+       DevolucaoImp."MainUsage"
+  FROM      ORDN Devolucao
+  LEFT JOIN RDN12 DevolucaoImp ON Devolucao."DocEntry" = DevolucaoImp."DocEntry"
+  LEFT JOIN "Process" Nota     ON Nota."DocEntry" = Devolucao."DocEntry" AND Nota."DocType" = Devolucao."ObjType"));
