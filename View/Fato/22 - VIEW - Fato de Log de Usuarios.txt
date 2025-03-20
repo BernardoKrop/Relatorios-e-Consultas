@@ -1,0 +1,26 @@
+CREATE OR REPLACE VIEW "vw_fLogUsuarios" AS 
+SELECT 
+   LogUsr."UserCode" AS "CodUsuario",
+   CASE LogUsr."Action"
+       WHEN 'C' THEN 'Criado'
+       WHEN 'D' THEN 'Superusuário deselecionado'
+       WHEN 'F' THEN 'Falha no login'
+       WHEN 'I' THEN 'Login bem-sucedido'
+       WHEN 'L' THEN 'Bloqueado'
+       WHEN 'N' THEN 'Falha ao desbloquear tela'
+       WHEN 'O' THEN 'Logoff'
+       WHEN 'P' THEN 'Senha alterada'
+       WHEN 'R' THEN 'Removido'
+       WHEN 'S' THEN 'Superusuário selecionado'
+       WHEN 'T' THEN 'Alteração temporária de usuário'
+       WHEN 'U' THEN 'Desbloqueado'
+       ELSE 'Ação desconhecida'
+   END AS "Acao",
+   LogUsr."ActionBy" AS "AcaoPor",
+   LogUsr."ClientIP" AS "IPMandante",
+   LogUsr."ClientName" AS "NomeMandante",
+   TO_DATE(LogUsr."Date") AS "Data",
+   to_nvarchar(to_time(lpad(LogUsr."Time", 6, '0'), 'HHMISS'))  AS "Hora"
+FROM USR5 LogUsr
+INNER JOIN OUSR Usuario ON Usuario.USER_CODE = LogUsr."UserCode"
+ORDER BY "Data" DESC, "Hora" DESC
