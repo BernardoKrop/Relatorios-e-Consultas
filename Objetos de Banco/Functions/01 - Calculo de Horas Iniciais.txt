@@ -1,3 +1,4 @@
+--Função para calcular todas as horas desde um periodo incial até as 17 hrs
 CREATE OR REPLACE FUNCTION "HorasIniciais" (IN DtHoraInicio TIMESTAMP)
 returns retorno DECIMAL
 AS
