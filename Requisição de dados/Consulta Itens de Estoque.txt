@@ -1,23 +1,56 @@
-/*       CONSULTA DE ANALISE DE ITENS DE ESTOQUE
-Essa consulta busca todos as ocorrencias de um item em Notas Fiscais de Entrada, com a fim de ter melhor gestão de estoque e compras
+/*
+---------------------------------------------------------------
+Query para Relatório de Ocorrências de Itens em NF de Entrada
+Criador: Bernardo da Silva Kropiwiec
+Data: 02/05/2025
+Área responsável pela solicitação: Contabil
+
+Descrição:
+Essa consulta busca todas as ocorrências de um item em Notas Fiscais de Entrada, 
+com o objetivo de aprimorar a gestão de estoque e o planejamento de compras.
+Inclui, adicionalmente, o nº e a data do documento mais recente associados a cada item.
+---------------------------------------------------------------
 */
-SELECT Grupo."ItmsGrpCod"           AS "Código Grupo",
-	   Grupo."ItmsGrpNam"           AS "Nome Grupo",
-       NFEntradaItem."ItemCode"        AS "Código Item",
-	   NFEntradaItem."Dscription"      AS "Nome Item",	
-	   NFEntradaItem."UomCode"         AS "Unidade Medida",
-       COUNT(NFEntradaItem."ItemCode") AS "Ocorrencias em NF",
-       SUM(NFEntradaItem."Quantity")   AS "Volume Total"
-  FROM       OPCH NFEntrada
-  INNER JOIN PCH1 NFEntradaItem ON NFEntrada."DocEntry" = NFEntradaItem."DocEntry"
-  LEFT JOIN OITM Produto        ON NFEntradaItem."ItemCode" = Produto."ItemCode"
-  LEFT JOIN OITB Grupo          ON Produto."ItmsGrpCod" = Grupo."ItmsGrpCod"  
-WHERE NFEntrada."CANCELED" = 'N'
-  AND NFEntradaItem."Quantity" > 0
-GROUP BY NFEntradaItem."ItemCode",
-         NFEntradaItem."Dscription",
-         Grupo."ItmsGrpCod",
-         Grupo."ItmsGrpNam",
-         NFEntradaItem."UomCode"
-ORDER BY NFEntradaItem."UomCode" 
-  
+
+WITH UltDoc AS (
+    SELECT
+        p1."ItemCode",
+        o1."DocNum"  AS "LastDocNum",
+        o1."DocDate" AS "LastDocDate",
+        ROW_NUMBER() OVER (
+            PARTITION BY p1."ItemCode"
+            ORDER BY     o1."DocDate" DESC,      -- mais recente primeiro
+                         o1."DocNum"  DESC       -- desempate, opcional
+        ) AS rn
+    FROM OPCH o1
+    JOIN PCH1 p1 ON o1."DocEntry" = p1."DocEntry"
+    WHERE o1."CANCELED" = 'N'
+)
+
+SELECT
+    grp."ItmsGrpCod"               AS "Código Grupo",
+    grp."ItmsGrpNam"               AS "Nome Grupo",
+    it."ItemCode"                  AS "Código Item",
+    it."Dscription"                AS "Nome Item",
+    it."UomCode"                   AS "Unidade Medida",
+    COUNT(it."ItemCode")           AS "Ocorrencias em NF",
+    SUM(it."Quantity")             AS "Volume Total",
+    ult."LastDocNum"               AS "Nr Última NF",
+    TO_DATE(ult."LastDocDate")     AS "Data Última NF"
+FROM       OPCH nfe
+JOIN       PCH1 it   ON nfe."DocEntry"   = it."DocEntry"
+LEFT JOIN  OITM prod ON it."ItemCode"    = prod."ItemCode"
+LEFT JOIN  OITB grp  ON prod."ItmsGrpCod"= grp."ItmsGrpCod"
+LEFT JOIN  UltDoc ult ON ult."ItemCode"  = it."ItemCode"
+                     AND ult.rn = 1       -- garante só a linha mais recente
+WHERE nfe."CANCELED" = 'N'
+  AND it."Quantity"  > 0
+GROUP BY
+    grp."ItmsGrpCod",
+    grp."ItmsGrpNam",
+    it."ItemCode",
+    it."Dscription",
+    it."UomCode",
+    ult."LastDocNum",
+    ult."LastDocDate"
+ORDER BY it."UomCode";
