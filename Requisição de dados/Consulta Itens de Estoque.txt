@@ -19,38 +19,61 @@ WITH UltDoc AS (
         o1."DocDate" AS "LastDocDate",
         ROW_NUMBER() OVER (
             PARTITION BY p1."ItemCode"
-            ORDER BY     o1."DocDate" DESC,      -- mais recente primeiro
-                         o1."DocNum"  DESC       -- desempate, opcional
+            ORDER BY     o1."DocDate" DESC,
+                         o1."DocNum"  DESC
         ) AS rn
     FROM OPCH o1
     JOIN PCH1 p1 ON o1."DocEntry" = p1."DocEntry"
     WHERE o1."CANCELED" = 'N'
+),
+NomeCount AS (
+    SELECT
+        "ItemName",
+        COUNT(*) AS "ItensComMesmoNome"
+    FROM OITM
+    GROUP BY "ItemName"
+),
+BaseAgrupada AS (
+    SELECT
+        grp."ItmsGrpCod"               AS "Código Grupo",
+        grp."ItmsGrpNam"               AS "Nome Grupo",
+        it."ItemCode"                  AS "Código Item",
+        prod."ItemName"                AS "Nome Item",
+        CASE PROD."InvntItem"
+          WHEN 'Y' THEN 'Estocavel'
+          ELSE 'Nao Estocavel'
+        END AS "Estocavel",
+        CASE PROD."validFor"
+          WHEN 'Y' THEN 'Ativo'
+          ELSE 'Inativo'
+        END AS "Ativo",
+        it."UomCode"                   AS "Unidade Medida",
+        COUNT(it."ItemCode")           AS "Ocorrencias em NF",
+        SUM(it."Quantity")             AS "Volume Total",
+        SUM(IT."LineTotal")            AS "Valor Total",
+        ult."LastDocNum"               AS "Nr Última NF",
+        TO_DATE(ult."LastDocDate")     AS "Data Última NF"
+    FROM       OPCH nfe
+    JOIN       PCH1 it   ON nfe."DocEntry"   = it."DocEntry"
+    LEFT JOIN  OITM prod ON it."ItemCode"    = prod."ItemCode"
+    LEFT JOIN  OITB grp  ON prod."ItmsGrpCod"= grp."ItmsGrpCod"
+    LEFT JOIN  UltDoc ult ON ult."ItemCode"  = it."ItemCode" AND ult.rn = 1
+    WHERE nfe."CANCELED" = 'N'
+      AND it."Quantity"  > 0
+    GROUP BY
+        grp."ItmsGrpCod",
+        grp."ItmsGrpNam",
+        it."ItemCode",
+        prod."ItemName",
+        it."UomCode",
+        ult."LastDocNum",
+        ult."LastDocDate",
+        PROD."InvntItem",
+        PROD."validFor"
 )
-
 SELECT
-    grp."ItmsGrpCod"               AS "Código Grupo",
-    grp."ItmsGrpNam"               AS "Nome Grupo",
-    it."ItemCode"                  AS "Código Item",
-    it."Dscription"                AS "Nome Item",
-    it."UomCode"                   AS "Unidade Medida",
-    COUNT(it."ItemCode")           AS "Ocorrencias em NF",
-    SUM(it."Quantity")             AS "Volume Total",
-    ult."LastDocNum"               AS "Nr Última NF",
-    TO_DATE(ult."LastDocDate")     AS "Data Última NF"
-FROM       OPCH nfe
-JOIN       PCH1 it   ON nfe."DocEntry"   = it."DocEntry"
-LEFT JOIN  OITM prod ON it."ItemCode"    = prod."ItemCode"
-LEFT JOIN  OITB grp  ON prod."ItmsGrpCod"= grp."ItmsGrpCod"
-LEFT JOIN  UltDoc ult ON ult."ItemCode"  = it."ItemCode"
-                     AND ult.rn = 1       -- garante só a linha mais recente
-WHERE nfe."CANCELED" = 'N'
-  AND it."Quantity"  > 0
-GROUP BY
-    grp."ItmsGrpCod",
-    grp."ItmsGrpNam",
-    it."ItemCode",
-    it."Dscription",
-    it."UomCode",
-    ult."LastDocNum",
-    ult."LastDocDate"
-ORDER BY it."UomCode";
+    b.*,
+    nc."ItensComMesmoNome" AS "Qtd Itens Mesmo Nome"
+FROM BaseAgrupada b
+LEFT JOIN NomeCount nc ON b."Nome Item" = nc."ItemName"
+ORDER BY b."Unidade Medida";
