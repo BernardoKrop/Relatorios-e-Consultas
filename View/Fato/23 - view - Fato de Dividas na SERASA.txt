@@ -1,0 +1,40 @@
+CREATE OR REPLACE VIEW "VW_FDividasSerasa" AS 
+SELECT
+	ID AS "IdOcorrencia",
+	COMPANY_DOCUMENT AS "CNPJ",
+	DOC_TYPE AS "TipoAnotacao",
+	OCCURRENCE_DATE AS "DataOcorrencia",
+	LEGAL_NATURE AS "NaturezaDivida",
+	CONTRACT_ID AS "NumeroContrato",
+	CREDITOR_NAME AS "NomeCredor",
+	AMOUNT AS "ValorDivida",
+	OFFICE_NUMBER AS "NumeroCartorio",
+	CITY AS "Cidade",
+	FEDERAL_UNIT AS "UF",
+	CASE ALINEA
+	    WHEN 11 THEN 'Cheque sem fundos – 1a apresentacao'
+	    WHEN 12 THEN 'Cheque sem fundos – 2a apresentacao'
+	    WHEN 13 THEN 'Conta encerrada'
+	    WHEN 14 THEN 'Pratica espuria'
+	    WHEN 20 THEN 'Folha de cheque cancelada por solicitacao'
+	    WHEN 21 THEN 'Contra-ordem (revogacao)'
+	    WHEN 22 THEN 'Divergencia ou insuficiencia de assinatura'
+	    WHEN 23 THEN 'Cheque emitido por entidade invalida'
+	    WHEN 24 THEN 'Bloqueio judicial ou determinacao do BACEN'
+	    WHEN 25 THEN 'Cancelamento de talonario pelo banco'
+	    WHEN 28 THEN 'Furto ou roubo de folhas em branco'
+	    WHEN 29 THEN 'Cheque prescrito'
+	    WHEN 30 THEN 'Cheque apresentado por estabelecimento nao bancario'
+	    WHEN 31 THEN 'Erro formal (ex: rasura)'
+	    WHEN 33 THEN 'Divergencia de endosso'
+	    WHEN 34 THEN 'Cheque emitido sem previo controle ou autorizacao'
+	    WHEN 0  THEN 'Nao informado ou motivo desconhecido'
+	    ELSE NULL
+    END AS "MotivoCheque",
+	BANK_ID AS "CodigoBanco",
+	BANK_NAME AS "NomeBanco",
+	BANK_AGENCY_ID AS "CodigoAgencia",
+	CHECK_NUMBER AS "NumeroCheque",
+	CHECK_COUNT AS "QuantidadeCheques",
+	REQUEST_DATE AS "DataSolicitacao"
+FROM NEGATIVE_DATA;
